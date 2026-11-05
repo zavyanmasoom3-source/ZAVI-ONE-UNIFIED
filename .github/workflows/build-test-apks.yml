@@ -74,7 +74,8 @@ jobs:
             "${ANDROID_SDK_ROOT}/build-tools/36.0.0/apksigner" verify --verbose "final-test-apks/$name"
           done
           ls -lh final-test-apks/*.apk
-      - name: Upload test APK artifacts (independent of Releases)
+      - name: Upload test APK artifacts (best effort; quota may be exhausted)
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ZAVI-TEST-APKS-${{ github.run_number }}
