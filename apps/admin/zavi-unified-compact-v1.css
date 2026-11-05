@@ -1,0 +1,10 @@
+/* Unified compact design. Visual-only: existing features and records are preserved. */
+html,body{max-width:100%;overflow-x:clip}
+:is(#content,#view) :is(.card,.panel,.settings-card,.summary-card,.report-card,.form-card,.admin-card,.service-card,.table-card){box-sizing:border-box;min-width:0;border-radius:14px}
+:is(#content,#view) :is(.card,.panel,.settings-card,.summary-card,.report-card,.form-card,.admin-card,.service-card,.table-card) :is(h1,h2,h3,h4,p){overflow-wrap:anywhere}
+:is(#content,#view,#overlay,#modalBg) :is(input,select,textarea,button){box-sizing:border-box;max-width:100%;min-width:0}
+:is(#content,#view,#overlay,#modalBg) :is(input,select,textarea){min-height:42px;border-radius:10px}
+:is(#content,#view,#overlay,#modalBg) :is(button,.btn,.button){min-height:38px;border-radius:10px;white-space:normal;overflow-wrap:anywhere}
+:is(#content,#view) :is(.table-wrap,.table-container,.responsive-table){max-width:100%;overflow-x:auto}
+:is(#overlay,#modalBg) :is(.modal,.dialog,.modal-content){box-sizing:border-box;max-width:min(96vw,640px);max-height:calc(100dvh - 24px);overflow-y:auto}
+@media(max-width:600px){:is(#content,#view) :is(.card,.panel,.settings-card,.summary-card,.report-card,.form-card,.admin-card,.service-card,.table-card){padding:clamp(10px,3vw,16px);margin-block:8px}:is(#content,#view,#overlay,#modalBg) :is(input,select,textarea){font-size:16px}}
