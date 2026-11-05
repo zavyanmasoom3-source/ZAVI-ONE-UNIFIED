@@ -45,3 +45,14 @@ html[data-zavi-theme="dark"] .zui-phase1{color:var(--text,#f4f7ff)}
 html[dir="rtl"] .zui-phase2{text-align:right}
 html[dir="ltr"] .zui-phase2{text-align:left}
 @media(max-width:480px){.zui-phase2 .zui-section-heading{padding:10px 12px}.zui-phase2-content .card{padding:12px}}
+
+/* Phase 3: reusable internal forms; preserve all input IDs and event handlers. */
+.zui-form-grid-v3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px!important;align-items:start}
+.zui-form-grid-v3>*,.zui-form-grid-v3 label{min-width:0;max-width:100%}
+.zui-input-v3{max-width:100%;min-width:0;box-sizing:border-box;border-radius:11px!important}
+.zui-action-row-v3{display:flex;flex-wrap:wrap;align-items:center;gap:7px!important}
+.zui-table-v3{width:100%;border-collapse:separate;border-spacing:0}
+.zui-table-v3 th,.zui-table-v3 td{padding:9px 10px;vertical-align:middle}
+.zui-phase2 .zui-input-v3:focus-visible,.zui-phase1 .zui-input-v3:focus-visible{outline:2px solid var(--accent,#3b82f6);outline-offset:2px}
+html[data-zavi-theme="glass"] .zui-input-v3{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+@media(max-width:480px){.zui-form-grid-v3{grid-template-columns:minmax(0,1fr)}.zui-action-row-v3 .btn{max-width:100%}}
