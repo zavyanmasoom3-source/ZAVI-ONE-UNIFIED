@@ -13,6 +13,7 @@ on:
       - 'settings.gradle'
       - 'build.gradle'
       - 'gradle.properties'
+      - 'scripts/**'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
@@ -84,6 +85,8 @@ jobs:
           printf '%s\n' '<?xml version="1.0" encoding="utf-8"?><paths xmlns:android="http://schemas.android.com/apk/res/android"><cache-path name="camera" path="."/></paths>' > android-build/app/src/main/res/xml/zavi_camera_paths.xml
       - name: Fix inline WebView receipt script parsing
         run: python3 scripts/fix-webview-receipt.py
+      - name: Validate embedded HTML is not exposing source code
+        run: python3 scripts/validate-webview-html.py
       - name: Assemble debug APK (compilation smoke test)
         run: ./gradlew :app:assembleDebug -PzaviApp=${{ matrix.app }} --stacktrace
       - name: Verify debug APK locally without consuming artifact quota
@@ -114,7 +117,8 @@ jobs:
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Release signing secrets unavailable; debug smoke APK only."
+            echo "::error::Release signing secrets unavailable; refusing to publish incomplete release."
+            exit 1
           fi
       - name: Validate and decode release keystore securely
         if: steps.signing.outputs.available == 'true'
