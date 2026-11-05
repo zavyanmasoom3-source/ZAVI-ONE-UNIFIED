@@ -1,0 +1,57 @@
+plugins { id 'com.android.application' }
+
+String appVariant = providers.gradleProperty("zaviApp").getOrElse("one")
+if (!(appVariant in ["one", "admin"])) throw new GradleException("zaviApp must be one or admin")
+boolean admin = appVariant == "admin"
+android {
+    namespace 'com.zavione.mobile'
+    compileSdk 36
+    defaultConfig {
+        applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
+        minSdk 26
+        targetSdk 36
+        versionCode admin ? 145600 : 660690
+        versionName admin ? '1.4.60-reliability-qa' : '66.69-reliability-qa'
+        resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
+    }
+    signingConfigs {
+        release {
+            def storePath = System.getenv('ZAVI_RELEASE_STORE_FILE')
+            if (storePath) {
+                storeFile file(storePath)
+                storePassword System.getenv('ZAVI_RELEASE_STORE_PASSWORD')
+                keyAlias System.getenv('ZAVI_RELEASE_KEY_ALIAS')
+                keyPassword System.getenv('ZAVI_RELEASE_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            debuggable false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    packaging { resources { excludes += ['/META-INF/{AL2.0,LGPL2.1}'] } }
+}
+// Kotlin 1.8+ merges jdk7/jdk8 stdlib classes into kotlin-stdlib.
+configurations.configureEach {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
+dependencies { implementation 'androidx.webkit:webkit:1.13.0'; implementation 'androidx.core:core:1.13.1'; implementation 'androidx.biometric:biometric:1.1.0' }
+
+// Never silently ship a debug-signed release. Existing users require the original key.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.project == project && it.name.toLowerCase().contains('release') }) {
+        def required = ['ZAVI_RELEASE_STORE_FILE', 'ZAVI_RELEASE_STORE_PASSWORD', 'ZAVI_RELEASE_KEY_ALIAS', 'ZAVI_RELEASE_KEY_PASSWORD']
+        if (required.any { !System.getenv(it) }) {
+            throw new GradleException('Release signing is missing. Configure the ORIGINAL signing key securely; no debug fallback is permitted.')
+        }
+        if (!file(System.getenv('ZAVI_RELEASE_STORE_FILE')).isFile()) {
+            throw new GradleException('Release keystore file does not exist.')
+        }
+    }
+}
