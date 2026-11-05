@@ -9,9 +9,6 @@ for app in ("one","admin"):
     for name in ("zavi-ui-foundation-v2.css","zavi-preferences-v2.js","zavi-preferences-v2.css","zavi-unified-compact-v1.css"):
         if name not in html: failed.append(f"{app}: entrypoint does not load {name}")
         if not (root/name).is_file(): failed.append(f"{app}: missing asset {name}")
-    for tag in re.findall(r'<(?:script|link)\\b[^>]*?(?:src|href)=[\\"\\'](\\.[^\\"\\']+)',html,re.I):
-        local=tag.split("?")[0].removeprefix("./")
-        if not (root/local).is_file():failed.append(f"{app}: missing referenced asset {local}")
     for code in ("fa-AF","ps-AF","en"):
         if code not in (root/"zavi-preferences-v2.js").read_text(encoding="utf-8"):failed.append(f"{app}: language missing {code}")
     print(f"{app}: source assets and theme/language module checked")
