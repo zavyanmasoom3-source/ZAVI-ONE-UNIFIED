@@ -31,6 +31,10 @@ jobs:
             echo "::error::Backup passphrase must contain at least 20 characters."
             exit 1
           fi
+          if [[ "$STORE_PASSWORD" != "$KEY_PASSWORD" ]]; then
+            echo "::error::For PKCS12, ZAVI_RELEASE_KEY_PASSWORD must equal ZAVI_RELEASE_STORE_PASSWORD."
+            exit 1
+          fi
           if [[ "$KEY_ALIAS" != "zavi-release" ]]; then
             echo "::error::Set ZAVI_RELEASE_KEY_ALIAS to zavi-release before running."
             exit 1
