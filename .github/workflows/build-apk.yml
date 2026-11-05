@@ -180,8 +180,22 @@ jobs:
           tag="android-build-${GITHUB_RUN_NUMBER}"
           asset=$(find final-apks -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$asset"
+          # Matrix jobs may reach this point simultaneously. Only one creates
+          # the release; the other waits for it instead of failing on a race.
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --title "ZAVI ONE Android build ${GITHUB_RUN_NUMBER}" --notes "Signed Android builds from commit ${GITHUB_SHA}. Both application variants are published by the matrix jobs." --prerelease
+            gh release create "$tag" --title "ZAVI ONE Android build ${GITHUB_RUN_NUMBER}" --notes "Signed Android builds from commit ${GITHUB_SHA}. Automated build only; device and functional QA are still required." --prerelease || true
           fi
-          gh release upload "$tag" "$asset" --clobber
-          echo "Published $asset to release $tag"
+          for attempt in 1 2 3 4 5 6; do
+            if gh release view "$tag" >/dev/null 2>&1; then break; fi
+            sleep 5
+          done
+          gh release view "$tag" >/dev/null || { echo "::error::GitHub Release creation failed"; exit 1; }
+          for attempt in 1 2 3; do
+            if gh release upload "$tag" "$asset" --clobber; then
+              echo "Published $asset to release $tag"
+              exit 0
+            fi
+            sleep $((attempt * 5))
+          done
+          echo "::error::Unable to publish $asset after retries"
+          exit 1
