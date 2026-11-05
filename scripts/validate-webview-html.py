@@ -37,9 +37,9 @@ check.feed(html)
 visible = ' '.join(check.visible)
 # Multiple JS statements in visible text indicate a premature closing script tag.
 signatures = [
-    r'\\b(?:const|let|var)\\s+[A-Za-z_$][\\w$]*\\s*=',
-    r'\\bfunction\\s+[A-Za-z_$][\\w$]*\\s*\\(',
-    r'\\breturn\\s+const\\b',
+    r'\b(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=',
+    r'\bfunction\s+[A-Za-z_$][\w$]*\s*\(',
+    r'\breturn\s+const\b',
 ]
 hits = [pattern for pattern in signatures if re.search(pattern, visible)]
 if len(hits) >= 2:
