@@ -3,6 +3,17 @@ plugins { id 'com.android.application' }
 String appVariant = providers.gradleProperty("zaviApp").getOrElse("one")
 if (!(appVariant in ["one", "admin"])) throw new GradleException("zaviApp must be one or admin")
 boolean admin = appVariant == "admin"
+
+// Signing secrets are supplied by CI environment variables, never stored in Git.
+def releaseSigningEnv = [
+    storeFile: 'ZAVI_RELEASE_STORE_FILE',
+    storePassword: 'ZAVI_RELEASE_STORE_PASSWORD',
+    keyAlias: 'ZAVI_RELEASE_KEY_ALIAS',
+    keyPassword: 'ZAVI_RELEASE_KEY_PASSWORD'
+]
+def releaseSigning = releaseSigningEnv.collectEntries { field, envName ->
+    [(field): providers.environmentVariable(envName).getOrElse('')]
+}
 android {
     namespace 'com.zavione.mobile'
     compileSdk 36
@@ -16,12 +27,11 @@ android {
     }
     signingConfigs {
         release {
-            def storePath = System.getenv('ZAVI_RELEASE_STORE_FILE')
-            if (storePath) {
-                storeFile file(storePath)
-                storePassword System.getenv('ZAVI_RELEASE_STORE_PASSWORD')
-                keyAlias System.getenv('ZAVI_RELEASE_KEY_ALIAS')
-                keyPassword System.getenv('ZAVI_RELEASE_KEY_PASSWORD')
+            if (releaseSigning.values().every { it }) {
+                storeFile file(releaseSigning.storeFile)
+                storePassword releaseSigning.storePassword
+                keyAlias releaseSigning.keyAlias
+                keyPassword releaseSigning.keyPassword
             }
         }
     }
@@ -43,15 +53,15 @@ configurations.configureEach {
 }
 dependencies { implementation 'androidx.webkit:webkit:1.13.0'; implementation 'androidx.core:core:1.13.1'; implementation 'androidx.biometric:biometric:1.1.0' }
 
-// Never silently ship a debug-signed release. Existing users require the original key.
+// Fail closed for release tasks: never fall back to a debug key or unsigned APK.
 gradle.taskGraph.whenReady { graph ->
     if (graph.allTasks.any { it.project == project && it.name.toLowerCase().contains('release') }) {
-        def required = ['ZAVI_RELEASE_STORE_FILE', 'ZAVI_RELEASE_STORE_PASSWORD', 'ZAVI_RELEASE_KEY_ALIAS', 'ZAVI_RELEASE_KEY_PASSWORD']
-        if (required.any { !System.getenv(it) }) {
-            throw new GradleException('Release signing is missing. Configure the ORIGINAL signing key securely; no debug fallback is permitted.')
+        def missing = releaseSigningEnv.findAll { field, envName -> !releaseSigning[field] }.values()
+        if (!missing.isEmpty()) {
+            throw new GradleException('Release signing is missing required environment variables: ' + missing.join(', '))
         }
-        if (!file(System.getenv('ZAVI_RELEASE_STORE_FILE')).isFile()) {
-            throw new GradleException('Release keystore file does not exist.')
+        if (!file(releaseSigning.storeFile).isFile()) {
+            throw new GradleException('Release keystore file does not exist at the configured path.')
         }
     }
 }
