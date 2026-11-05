@@ -82,6 +82,8 @@ jobs:
           cp "apps/${{ matrix.app }}/icon-192.png" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.png
           printf '%s\n' '<resources><style name="ZaviTheme" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:windowLightStatusBar">false</item></style></resources>' > android-build/app/src/main/res/values/styles.xml
           printf '%s\n' '<?xml version="1.0" encoding="utf-8"?><paths xmlns:android="http://schemas.android.com/apk/res/android"><cache-path name="camera" path="."/></paths>' > android-build/app/src/main/res/xml/zavi_camera_paths.xml
+      - name: Fix inline WebView receipt script parsing
+        run: python3 scripts/fix-webview-receipt.py
       - name: Assemble debug APK (compilation smoke test)
         run: ./gradlew :app:assembleDebug -PzaviApp=${{ matrix.app }} --stacktrace
       - name: Verify debug APK locally without consuming artifact quota
