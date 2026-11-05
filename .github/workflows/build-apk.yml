@@ -1,4 +1,5 @@
 name: Build ZAVI Android APKs
+# Release rebuild after successful signing initialization; preserve all application assets.
 on:
   push:
     branches: [main]
