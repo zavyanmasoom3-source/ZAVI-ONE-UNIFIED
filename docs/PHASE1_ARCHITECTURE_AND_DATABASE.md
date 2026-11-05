@@ -49,3 +49,12 @@ Original SQL was copied to `supabase/legacy-staged/`, not `supabase/migrations/`
 - [ ] Obtain user approval to proceed to Phase 2
 
 No claims of 100% preservation or zero bugs until runtime and security verification.
+
+## Verified cross-check — 2026-11-05
+- Authoritative project confirmed by owner: `wbbmwfnmurpphwxesssx`.
+- `app-source/one/cloud-config.js` and `app-source/one/index.html` contain the EU project URL; `app-source/admin/app.js` contains the same EU URL. Runtime local overrides still require testing.
+- Read-only Supabase inspection found 22 public tables, all with RLS enabled, and the existing `zavi_admin_grant_trial_7days` RPC.
+- Compared original legacy SQL names against the catalog: `zavi_admin_registration_contacts` exists; `zavi_v6547_account_contacts`, `private.zavi_admin_communications_log`, `zavi_admin_message_mark_v6595`, `zavi_admin_message_history_v6595`, `zavi_warehouse_no_negative_guard`, `zavi_warehouse_post_movement` were not found by the targeted query.
+- Original staged scripts include DROP statements and CREATE OR REPLACE FUNCTION; **do not execute them as-is**. Safe migration must preserve existing signatures, grants, triggers, policies and dependencies.
+- At inventory time the new repo still lacked 345 original ONE/ADMIN files (including binary assets). Migration and feature parity are **not complete**.
+- No SQL DDL/DML executed against production.
