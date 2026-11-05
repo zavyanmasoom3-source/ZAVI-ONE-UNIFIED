@@ -5,6 +5,8 @@ on:
     branches: [main, 'fix/unified-clean-ui-20261105']
     paths:
       - '.github/workflows/build-test-apks.yml'
+      - 'android-build/**'
+      - 'packages/shared/**'
       - 'apps/one/**'
       - 'apps/admin/**'
   workflow_dispatch:
@@ -70,16 +72,23 @@ jobs:
             apk=$(find android-build/app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)
             test -n "$apk"
             if [[ "$app" == "one" ]]; then name="ZAVI-ONE-TEST.apk"; else name="ZAVI-ONE-ADMIN-TEST.apk"; fi
+            unzip -l "$apk" | grep -F "assets/index.html" >/dev/null || { echo "::error::Missing app HTML in APK"; exit 1; }
+            unzip -p "$apk" assets/index.html | grep -F "zavi-unified-compact-v1.css" >/dev/null || { echo "::error::UI entrypoint not packaged"; exit 1; }
+            unzip -l "$apk" | grep -F "assets/zavi-unified-compact-v1.css" >/dev/null || { echo "::error::UI stylesheet missing in APK"; exit 1; }
             cp "$apk" "final-test-apks/$name"
             "${ANDROID_SDK_ROOT}/build-tools/36.0.0/apksigner" verify --verbose "final-test-apks/$name"
           done
           ls -lh final-test-apks/*.apk
+          (cd final-test-apks && sha256sum *.apk > SHA256SUMS.txt)
+          cat final-test-apks/SHA256SUMS.txt
       - name: Upload test APK artifacts (best effort; quota may be exhausted)
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ZAVI-TEST-APKS-${{ github.run_number }}
-          path: final-test-apks/*.apk
+          path: |
+            final-test-apks/*.apk
+            final-test-apks/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
       - name: Publish test APKs to GitHub Releases with retry
@@ -92,9 +101,9 @@ jobs:
           notes="DEBUG TEST BUILDS ONLY. Android debug signing; not a production release."
           for attempt in 1 2 3 4; do
             if gh release view "$tag" >/dev/null 2>&1; then
-              gh release upload "$tag" final-test-apks/*.apk --clobber && exit 0
+              gh release upload "$tag" final-test-apks/*.apk final-test-apks/SHA256SUMS.txt --clobber && exit 0
             else
-              gh release create "$tag" final-test-apks/*.apk --title "ZAVI test APKs (${GITHUB_RUN_NUMBER})" --notes "$notes" --prerelease && exit 0
+              gh release create "$tag" final-test-apks/*.apk final-test-apks/SHA256SUMS.txt --title "ZAVI test APKs (${GITHUB_RUN_NUMBER})" --notes "$notes" --prerelease && exit 0
             fi
             echo "Release upload failed (attempt $attempt); APKs remain in workflow artifacts."
             sleep $((attempt * 15))
