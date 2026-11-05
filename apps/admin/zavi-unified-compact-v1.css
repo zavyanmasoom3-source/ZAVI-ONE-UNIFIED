@@ -8,3 +8,16 @@ html,body{max-width:100%;overflow-x:clip}
 :is(#content,#view) :is(.table-wrap,.table-container,.responsive-table){max-width:100%;overflow-x:auto}
 :is(#overlay,#modalBg) :is(.modal,.dialog,.modal-content){box-sizing:border-box;max-width:min(96vw,640px);max-height:calc(100dvh - 24px);overflow-y:auto}
 @media(max-width:600px){:is(#content,#view) :is(.card,.panel,.settings-card,.summary-card,.report-card,.form-card,.admin-card,.service-card,.table-card){padding:clamp(10px,3vw,16px);margin-block:8px}:is(#content,#view,#overlay,#modalBg) :is(input,select,textarea){font-size:16px}}
+
+/* Feature-preserving mobile admin layout: never hide existing management actions. */
+html,body{overflow-x:clip;overscroll-behavior-y:contain}
+#content,#view{min-width:0;max-width:100%;overflow-wrap:break-word}
+:is(#content,#view) :is(.card,.panel,.admin-card,.settings-card,.table-card){height:auto;max-height:none}
+:is(#content,#view) :is(.grid,.cards,.stats-grid,.admin-grid){min-width:0;max-width:100%}
+:is(#content,#view) :is(.table-wrap,.table-container,.responsive-table){overflow-x:auto;-webkit-overflow-scrolling:touch}
+:is(#overlay,#modalBg) :is(.modal,.dialog,.modal-content){overscroll-behavior:contain}
+@media(max-width:600px){
+ #content,#view{padding-inline:max(8px,env(safe-area-inset-left)) max(8px,env(safe-area-inset-right))}
+ :is(#content,#view) :is(.grid,.cards,.stats-grid,.admin-grid){grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));gap:8px}
+ :is(#content,#view) :is(.card,.panel,.admin-card,.settings-card,.table-card){padding:12px;line-height:1.55}
+}
