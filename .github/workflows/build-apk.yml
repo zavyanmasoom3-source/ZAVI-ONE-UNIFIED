@@ -94,10 +94,25 @@ jobs:
           ZAVI_RELEASE_KEY_ALIAS: ${{ secrets.ZAVI_RELEASE_KEY_ALIAS }}
           ZAVI_RELEASE_KEY_PASSWORD: ${{ secrets.ZAVI_RELEASE_KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease -PzaviApp=${{ matrix.app }} --stacktrace
+      - name: Verify and name signed release APK
+        if: steps.signing.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=$(find android-build/app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)
+          test -n "$apk"
+          mkdir -p final-apks
+          if [[ "${{ matrix.app }}" == "one" ]]; then
+            name="ZAVI-ONE.apk"
+          else
+            name="ZAVI-ONE-ADMIN.apk"
+          fi
+          cp "$apk" "final-apks/$name"
+          apksigner verify --verbose "final-apks/$name"
       - name: Upload signed release APK
         if: steps.signing.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ZAVI-${{ matrix.app }}-release-signed
-          path: android-build/app/build/outputs/apk/release/*.apk
+          path: final-apks/*.apk
           if-no-files-found: error
