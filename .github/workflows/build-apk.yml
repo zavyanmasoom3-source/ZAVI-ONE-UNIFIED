@@ -161,7 +161,9 @@ jobs:
             name="ZAVI-ONE-ADMIN.apk"
           fi
           cp "$apk" "final-apks/$name"
-          apksigner verify --verbose "final-apks/$name"
+          APKSIGNER="$ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner"
+          test -x "$APKSIGNER" || { echo "::error::Android SDK apksigner missing at $APKSIGNER"; exit 1; }
+          "$APKSIGNER" verify --verbose --print-certs "final-apks/$name"
       - name: Publish signed APK directly to GitHub Releases
         if: steps.signing.outputs.available == 'true'
         shell: bash
