@@ -8,3 +8,18 @@ html,body{max-width:100%;overflow-x:clip}
 :is(#content,#view) :is(.table-wrap,.table-container,.responsive-table){max-width:100%;overflow-x:auto}
 :is(#overlay,#modalBg) :is(.modal,.dialog,.modal-content){box-sizing:border-box;max-width:min(96vw,640px);max-height:calc(100dvh - 24px);overflow-y:auto}
 @media(max-width:600px){:is(#content,#view) :is(.card,.panel,.settings-card,.summary-card,.report-card,.form-card,.admin-card,.service-card,.table-card){padding:clamp(10px,3vw,16px);margin-block:8px}:is(#content,#view,#overlay,#modalBg) :is(input,select,textarea){font-size:16px}}
+
+/* Approved compact dashboard: existing actions remain operational. */
+@media(max-width:650px){
+ html[data-zavi-theme] #content.zrf-dashboard .z62-hero{min-height:0!important;padding:12px!important;border-radius:14px!important}
+ html[data-zavi-theme] #content.zrf-dashboard .z62-hero .z62-title{font-size:clamp(17px,4.8vw,21px)!important;line-height:1.4!important}
+ html[data-zavi-theme] #content.zrf-dashboard .z63-quick-panel{padding:10px!important;margin-block:8px!important;border-radius:13px!important}
+ html[data-zavi-theme] #content.zrf-dashboard .z63-quick-grid{gap:7px!important}
+ html[data-zavi-theme] #content.zrf-dashboard .z63-quick-tile{min-height:52px!important;padding:8px!important;border-radius:11px!important}
+ html[data-zavi-theme] #content.zrf-dashboard .zrf-primary{min-height:65px!important;padding:9px!important}
+ html[data-zavi-theme] #content.zrf-dashboard .zrf-tile{min-height:56px!important;padding:9px!important}
+ html[data-zavi-theme] #content.zrf-dashboard .zrf-search-wrap{min-height:42px!important;margin-bottom:8px!important}
+ html[data-zavi-theme] #content :is(.zv-wh-manager,.zavi-clean-settings-hub){padding:10px!important;border-radius:13px!important}
+ html[data-zavi-theme] #content .zavi-clean-settings-group>summary{min-height:44px!important;padding-block:7px!important}
+}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.zv-wh-manager,.zavi-clean-settings-hub,.z63-quick-panel) :is(label,.hint,.muted,small){color:#334b67!important;opacity:1!important}
