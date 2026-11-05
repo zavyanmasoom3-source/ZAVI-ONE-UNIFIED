@@ -74,11 +74,28 @@ jobs:
             "${ANDROID_SDK_ROOT}/build-tools/36.0.0/apksigner" verify --verbose "final-test-apks/$name"
           done
           ls -lh final-test-apks/*.apk
-      - name: Publish test APKs to GitHub Releases without artifact quota
+      - name: Upload test APK artifacts (independent of Releases)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI-TEST-APKS-${{ github.run_number }}
+          path: final-test-apks/*.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish test APKs to GitHub Releases with retry
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           tag="zavi-test-${GITHUB_RUN_NUMBER}"
-          gh release create "$tag" final-test-apks/ZAVI-ONE-TEST.apk final-test-apks/ZAVI-ONE-ADMIN-TEST.apk --title "ZAVI ONE and ADMIN test APKs (${GITHUB_RUN_NUMBER})" --notes "DEBUG TEST BUILDS ONLY. Both APKs use Android debug signing. For functional testing, not public production release. Existing apps signed with different certificates cannot be updated in place. Feature completeness has not been independently verified." --prerelease
+          notes="DEBUG TEST BUILDS ONLY. Android debug signing; not a production release."
+          for attempt in 1 2 3 4; do
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" final-test-apks/*.apk --clobber && exit 0
+            else
+              gh release create "$tag" final-test-apks/*.apk --title "ZAVI test APKs (${GITHUB_RUN_NUMBER})" --notes "$notes" --prerelease && exit 0
+            fi
+            echo "Release upload failed (attempt $attempt); APKs remain in workflow artifacts."
+            sleep $((attempt * 15))
+          done
+          echo "::warning::GitHub Releases unavailable; download APKs from workflow Artifacts."
