@@ -53,6 +53,8 @@ jobs:
             sleep $((attempt * 10))
           done
           chmod +x ./gradlew
+      - name: Check source asset integrity before packaging
+        run: python3 scripts/check-web-assets.py
       - name: Compile both apps as debug APKs
         shell: bash
         run: |
