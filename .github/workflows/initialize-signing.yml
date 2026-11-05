@@ -64,7 +64,7 @@ jobs:
         run: |
           set -euo pipefail
           tag="zavi-signing-backup-${GITHUB_RUN_NUMBER}"
-          gh release create "$tag" "$RUNNER_TEMP/zavi-release.jks.gpg#zavi-release.jks.gpg" --title "ZAVI signing key encrypted backup" --notes "IMPORTANT: Download and keep this encrypted backup and your separate ZAVI_KEY_BACKUP_PASSPHRASE safe. This file is NOT the unencrypted keystore. Never publish the passphrase. Decrypt locally using: gpg --decrypt --output zavi-release.jks zavi-release.jks.gpg" --prerelease
+          gh release create "$tag" "$RUNNER_TEMP/zavi-release.jks.gpg#zavi-release.jks.gpg" --repo "$GITHUB_REPOSITORY" --title "ZAVI signing key encrypted backup" --notes "IMPORTANT: Download and keep this encrypted backup and your separate ZAVI_KEY_BACKUP_PASSPHRASE safe. This file is NOT the unencrypted keystore. Never publish the passphrase. Decrypt locally using: gpg --decrypt --output zavi-release.jks zavi-release.jks.gpg" --prerelease
       - name: Set GitHub keystore secret using authorized fine-grained token
         shell: bash
         env:
