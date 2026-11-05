@@ -64,6 +64,9 @@ jobs:
             mkdir -p android-build/app/src/main/assets
             find android-build/app/src/main/assets -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
             cp -a "apps/$app/." android-build/app/src/main/assets/
+            # Embed the exact source identity in each APK, not a renamed old binary.
+            printf '{"version":"%s","commit":"%s","app":"%s","workflow_run":"%s"}\\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" "$app" "$GITHUB_RUN_NUMBER" > android-build/app/src/main/assets/zavi-build-info.json
+            test -s android-build/app/src/main/assets/zavi-build-info.json
             mkdir -p android-build/app/src/main/assets/packages/shared
             cp -a packages/shared/. android-build/app/src/main/assets/packages/shared/
             mkdir -p android-build/app/src/main/res/drawable-nodpi android-build/app/src/main/res/values android-build/app/src/main/res/xml
