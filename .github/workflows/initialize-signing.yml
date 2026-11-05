@@ -1,0 +1,76 @@
+name: Initialize ZAVI Android release signing (one time)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  initialize:
+    name: Generate key, encrypt backup, and configure signing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate prerequisites without displaying secrets
+        shell: bash
+        env:
+          ADMIN_TOKEN: ${{ secrets.ZAVI_SECRETS_ADMIN_TOKEN }}
+          BACKUP_PASSPHRASE: ${{ secrets.ZAVI_KEY_BACKUP_PASSPHRASE }}
+          STORE_PASSWORD: ${{ secrets.ZAVI_RELEASE_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ZAVI_RELEASE_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ZAVI_RELEASE_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          for name in ADMIN_TOKEN BACKUP_PASSPHRASE STORE_PASSWORD KEY_PASSWORD KEY_ALIAS; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing prerequisite secret (see workflow documentation): $name"
+              exit 1
+            fi
+          done
+          if [[ ${#BACKUP_PASSPHRASE} -lt 20 ]]; then
+            echo "::error::Backup passphrase must contain at least 20 characters."
+            exit 1
+          fi
+          if [[ "$KEY_ALIAS" != "zavi-release" ]]; then
+            echo "::error::Set ZAVI_RELEASE_KEY_ALIAS to zavi-release before running."
+            exit 1
+          fi
+          if ! GH_TOKEN="$ADMIN_TOKEN" gh api -X GET "repos/$GITHUB_REPOSITORY/actions/secrets/public-key" --jq .key_id >/dev/null; then
+            echo "::error::ZAVI_SECRETS_ADMIN_TOKEN needs repository Actions Secrets read/write permission."
+            exit 1
+          fi
+      - name: Generate keystore and encrypted recovery backup
+        shell: bash
+        env:
+          STORE_PASSWORD: ${{ secrets.ZAVI_RELEASE_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ZAVI_RELEASE_KEY_PASSWORD }}
+          BACKUP_PASSPHRASE: ${{ secrets.ZAVI_KEY_BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          umask 077
+          keytool -genkeypair -noprompt -keystore "$RUNNER_TEMP/zavi-release.jks" -storetype PKCS12 -alias zavi-release -keyalg RSA -keysize 4096 -validity 36500 -dname "CN=ZAVI ONE, OU=Android, O=ZAVI, C=AF" -storepass "$STORE_PASSWORD" -keypass "$KEY_PASSWORD"
+          keytool -list -keystore "$RUNNER_TEMP/zavi-release.jks" -storepass "$STORE_PASSWORD" -alias zavi-release >/dev/null
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 --symmetric --cipher-algo AES256 --output "$RUNNER_TEMP/zavi-release.jks.gpg" "$RUNNER_TEMP/zavi-release.jks" 3<<<"$BACKUP_PASSPHRASE"
+          test -s "$RUNNER_TEMP/zavi-release.jks.gpg"
+          base64 -w 0 "$RUNNER_TEMP/zavi-release.jks" > "$RUNNER_TEMP/zavi-base64.txt"
+      - name: Publish encrypted backup before configuring secret
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="zavi-signing-backup-${GITHUB_RUN_NUMBER}"
+          gh release create "$tag" "$RUNNER_TEMP/zavi-release.jks.gpg#zavi-release.jks.gpg" --title "ZAVI signing key encrypted backup" --notes "IMPORTANT: Download and keep this encrypted backup and your separate ZAVI_KEY_BACKUP_PASSPHRASE safe. This file is NOT the unencrypted keystore. Never publish the passphrase. Decrypt locally using: gpg --decrypt --output zavi-release.jks zavi-release.jks.gpg" --prerelease
+      - name: Set GitHub keystore secret using authorized fine-grained token
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.ZAVI_SECRETS_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh secret set ZAVI_RELEASE_KEYSTORE_BASE64 --repo "$GITHUB_REPOSITORY" < "$RUNNER_TEMP/zavi-base64.txt"
+          echo "Signing keystore configured. Preserve the encrypted backup from GitHub Releases and its separate passphrase."
+      - name: Clean temporary signing material
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$RUNNER_TEMP/zavi-release.jks" "$RUNNER_TEMP/zavi-base64.txt" "$RUNNER_TEMP/zavi-release.jks.gpg"
