@@ -56,7 +56,17 @@ jobs:
         run: |
           # The repository contains the official Gradle 8.13 launch scripts.
           # Generate the wrapper JAR from the Gradle distribution, not from an untrusted binary.
-          gradle wrapper --gradle-version 8.13 --distribution-type bin
+          for attempt in 1 2 3; do
+            if gradle wrapper --gradle-version 8.13 --distribution-type bin --no-daemon; then
+              break
+            fi
+            if [[ "$attempt" == 3 ]]; then
+              echo "::error::Gradle wrapper generation failed after three attempts"
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+          test -s gradle/wrapper/gradle-wrapper.jar || { echo "::error::Missing generated gradle-wrapper.jar"; exit 1; }
           chmod +x ./gradlew
           ./gradlew --version
       - name: Stage Android WebView assets and resources
