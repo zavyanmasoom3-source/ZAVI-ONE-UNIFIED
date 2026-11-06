@@ -4,6 +4,7 @@
  * Keeping and migrating private local data is the responsibility of the app.
  */
 'use strict';
+const APK_ORIGIN='https://appassets.androidplatform.net';
 const CACHE_NAME='zavi-one-shell-20261105-v11';
 const SHELL_PROTOCOL='zavi-shell-v2';
 const CACHE_PREFIX='zavi-one-';
@@ -119,6 +120,8 @@ self.addEventListener('activate',e=>{
 self.addEventListener('fetch',e=>{
  const r=e.request;if(r.method!=='GET')return;
  const u=new URL(r.url);if(!isScope(u))return;
+  // Installed APK assets must bypass PWA caches; the Android asset loader owns them.
+  if(u.origin===APK_ORIGIN)return;
  const doc=r.mode==='navigate'||r.destination==='document';
  const key=toKey(r.url)===ROOT?INDEX:toKey(r.url);
  if(!doc&&!STATIC.has(key))return;
