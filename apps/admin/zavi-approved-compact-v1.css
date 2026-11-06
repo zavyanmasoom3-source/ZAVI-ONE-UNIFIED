@@ -8,3 +8,13 @@
 html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(.admin-card,.card,.panel,.settings-card,.table-card,.report-card) :is(input,select,textarea){background:#fff;color:#172b46;border-color:#91a7bf}
 html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(.admin-card,.card,.panel,.settings-card,.table-card,.report-card) :is(label,.hint,.muted){color:#354a63;opacity:1}
 @media(prefers-reduced-motion:reduce){:is(.admin-card,.card,.panel,button){animation:none!important;transition:none!important}}
+
+/* Approved theme parity: retain visible controls in glass and dark themes. */
+html[data-zavi-appearance="glass"] #content :is(.card,.panel,.settings-card,.report-card,.form-card,.summary-card,.table-card) :is(input,select,textarea),
+html[data-zavi-theme="dark"] #content :is(.card,.panel,.settings-card,.report-card,.form-card,.summary-card,.table-card) :is(input,select,textarea){
+  color:var(--z59-ink,#f3f8ff);background:var(--z59-surface-2,rgba(22,44,76,.85));border-color:var(--z59-line,#45617e);
+}
+html[data-zavi-appearance="glass"] #content :is(input,textarea)::placeholder,
+html[data-zavi-theme="dark"] #content :is(input,textarea)::placeholder{color:var(--z59-sub,#bfd1e5);opacity:1}
+html[data-zavi-appearance="glass"] #content :is(.card,.panel,.settings-card,.report-card,.form-card,.summary-card,.table-card) :is(label,.hint,.muted),
+html[data-zavi-theme="dark"] #content :is(.card,.panel,.settings-card,.report-card,.form-card,.summary-card,.table-card) :is(label,.hint,.muted){color:var(--z59-sub,#bfd1e5);opacity:1}
