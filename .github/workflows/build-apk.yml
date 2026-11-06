@@ -105,7 +105,7 @@ jobs:
       - name: Validate embedded HTML is not exposing source code
         run: python3 scripts/validate-webview-html.py
       - name: Assemble debug APK (compilation smoke test)
-        run: ./gradlew :app:assembleDebug -PzaviApp=${{ matrix.app }} --stacktrace
+        run: ./gradlew :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --stacktrace
       - name: Verify debug APK locally without consuming artifact quota
         shell: bash
         run: |
@@ -117,7 +117,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviUnsignedReleaseQa=true --stacktrace
+          ./gradlew :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} -PzaviUnsignedReleaseQa=true --stacktrace
           apk=$(find android-build/app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)
           test -n "$apk" || { echo "::error::R8 release compilation produced no APK"; exit 1; }
           echo "R8/resource shrinking compilation succeeded. Unsigned QA output will not be published."
@@ -169,7 +169,7 @@ jobs:
           ZAVI_RELEASE_STORE_PASSWORD: ${{ secrets.ZAVI_RELEASE_STORE_PASSWORD }}
           ZAVI_RELEASE_KEY_ALIAS: ${{ secrets.ZAVI_RELEASE_KEY_ALIAS }}
           ZAVI_RELEASE_KEY_PASSWORD: ${{ secrets.ZAVI_RELEASE_KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease -PzaviApp=${{ matrix.app }} --stacktrace
+        run: ./gradlew :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --stacktrace
       - name: Verify and name signed release APK
         if: steps.signing.outputs.available == 'true'
         shell: bash
