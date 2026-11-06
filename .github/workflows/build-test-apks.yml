@@ -1,15 +1,6 @@
 name: Build ZAVI ONE and ADMIN test APKs
 
 on:
-  push:
-    branches: [main, dev, 'fix/unified-clean-ui-20261105']
-    paths:
-      - '.github/workflows/build-test-apks.yml'
-      - 'android-build/**'
-      - 'packages/shared/**'
-      - 'scripts/**'
-      - 'apps/one/**'
-      - 'apps/admin/**'
   workflow_dispatch:
 
 permissions:
