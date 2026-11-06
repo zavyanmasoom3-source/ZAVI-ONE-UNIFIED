@@ -2,7 +2,7 @@ name: Build ZAVI ONE and ADMIN test APKs
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/approved-ui-release-qa-20261106]
     paths:
       - '.github/workflows/build-test-apks.yml'
   workflow_dispatch:
