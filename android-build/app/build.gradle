@@ -3,6 +3,8 @@ plugins { id 'com.android.application' }
 String appVariant = providers.gradleProperty("zaviApp").getOrElse("one")
 if (!(appVariant in ["one", "admin"])) throw new GradleException("zaviApp must be one or admin")
 boolean admin = appVariant == "admin"
+int ciBuildNumber = providers.gradleProperty('zaviBuildNumber').map { it.toInteger() }.getOrElse(0)
+if (ciBuildNumber < 0 || ciBuildNumber > 9999) throw new GradleException('zaviBuildNumber must be 0..9999')
 // CI-only compilation check: exercise R8 without a signing key; never publish this APK.
 boolean unsignedReleaseQa = providers.gradleProperty('zaviUnsignedReleaseQa').map { it == 'true' }.getOrElse(false)
 
@@ -23,8 +25,8 @@ android {
         applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
         minSdk 26
         targetSdk 36
-        versionCode admin ? 145600 : 660690
-        versionName admin ? '1.4.60-reliability-qa' : '66.69-reliability-qa'
+        versionCode (admin ? 145600 : 660690) + ciBuildNumber
+        versionName (admin ? '1.4.60' : '66.69') + '.' + ciBuildNumber
         resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
     }
     signingConfigs {
