@@ -11,7 +11,18 @@ for app in ("one","admin"):
         if not (root/name).is_file(): failed.append(f"{app}: missing asset {name}")
     for code in ("fa-AF","ps-AF","en"):
         if code not in (root/"zavi-preferences-v2.js").read_text(encoding="utf-8"):failed.append(f"{app}: language missing {code}")
-    print(f"{app}: source assets and theme/language module checked")
+    # Every local script and stylesheet referenced by the entrypoint must exist.
+    # External https/data URLs and dynamic runtime resources are intentionally excluded.
+    for raw in re.findall(r'''(?:src|href)\\s*=\\s*["']([^"']+)["']''', html, flags=re.I):
+        path=raw.split("?",1)[0].split("#",1)[0]
+        if not path or path.startswith(("http:","https:","data:","blob:","//","#","mailto:")):
+            continue
+        candidate=(root/path).resolve()
+        if not candidate.is_relative_to(Path.cwd().resolve()):
+            failed.append(f"{app}: local asset escapes repository: {raw}")
+        elif not candidate.is_file():
+            failed.append(f"{app}: missing referenced asset: {raw}")
+    print(f"{app}: source assets, linked files, theme/language module checked")
 if failed:
     for f in failed:print("ERROR:",f,file=sys.stderr)
     sys.exit(1)
