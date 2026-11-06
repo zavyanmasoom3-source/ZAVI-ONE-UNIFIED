@@ -70,19 +70,7 @@ jobs:
             mkdir -p android-build/app/src/main/assets/packages/shared
             cp -a packages/shared/. android-build/app/src/main/assets/packages/shared/
             # Rewrite web-hosted relative paths to the packaged WebView asset root.
-            python3 - <<'PY'
-            from pathlib import Path
-            p=Path('android-build/app/src/main/assets/index.html')
-            s=p.read_text(encoding='utf-8')
-            count=s.count('../../packages/shared/')
-            if count < 3:
-                raise SystemExit(f'Expected shared imports missing: {count}')
-            s=s.replace('../../packages/shared/','./packages/shared/')
-            p.write_text(s,encoding='utf-8')
-            for name in ('database/supabase-config.js','security/access-contract.js','i18n/language-core.js'):
-                assert (Path('android-build/app/src/main/assets/packages/shared')/name).is_file(),name
-PY
-            mkdir -p android-build/app/src/main/res/drawable-nodpi android-build/app/src/main/res/values android-build/app/src/main/res/xml
+            python3 -c "from pathlib import Path; p=Path('android-build/app/src/main/assets/index.html'); s=p.read_text(encoding='utf-8'); assert s.count('../../packages/shared/')>=3; p.write_text(s.replace('../../packages/shared/','./packages/shared/'),encoding='utf-8'); assert all((Path('android-build/app/src/main/assets/packages/shared')/n).is_file() for n in ('database/supabase-config.js','security/access-contract.js','i18n/language-core.js'))"            mkdir -p android-build/app/src/main/res/drawable-nodpi android-build/app/src/main/res/values android-build/app/src/main/res/xml
             cp "apps/$app/icon-192.png" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.png
             printf '%s\n' '<resources><style name="ZaviTheme" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:windowLightStatusBar">false</item></style></resources>' > android-build/app/src/main/res/values/styles.xml
             printf '%s\n' '<?xml version="1.0" encoding="utf-8"?><paths xmlns:android="http://schemas.android.com/apk/res/android"><cache-path name="camera" path="."/></paths>' > android-build/app/src/main/res/xml/zavi_camera_paths.xml
