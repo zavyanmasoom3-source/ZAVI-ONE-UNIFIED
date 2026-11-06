@@ -49,6 +49,8 @@ jobs:
             sleep $((attempt * 10))
           done
           chmod +x ./gradlew
+      - name: Validate Dari Pashto English catalog parity
+        run: python3 scripts/validate-locale-parity.py
       - name: Validate approved UI assets before test builds
         run: python3 scripts/validate-approved-ui-assets.py
       - name: Compile both apps as debug APKs
