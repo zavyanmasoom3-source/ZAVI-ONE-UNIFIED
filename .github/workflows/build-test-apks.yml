@@ -49,6 +49,8 @@ jobs:
             sleep $((attempt * 10))
           done
           chmod +x ./gradlew
+      - name: Validate approved UI assets before test builds
+        run: python3 scripts/validate-approved-ui-assets.py
       - name: Compile both apps as debug APKs
         shell: bash
         run: |
