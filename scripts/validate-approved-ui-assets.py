@@ -24,7 +24,7 @@ for app in APPS:
             errors.append("admin: approved stylesheet not imported by showcase")
     # Every explicitly referenced local stylesheet/script must exist.
     for tag, attr in (("script", "src"), ("link", "href")):
-        pattern = rf'<{tag}\\b[^>]*\\b{attr}=["\\']([^"\\']+)'
+        pattern = rf'<{tag}[^>]*{attr}="([^"]+)"'
         for match in re.finditer(pattern, html, re.IGNORECASE):
             value = match.group(1).split("?", 1)[0].split("#", 1)[0]
             if not value or value.startswith(("https:", "http:", "data:", "//", "/")):
