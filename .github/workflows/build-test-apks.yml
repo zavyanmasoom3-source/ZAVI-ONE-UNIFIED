@@ -75,6 +75,7 @@ jobs:
           done
           ls -lh final-test-apks/*.apk
       - name: Publish test APKs to GitHub Releases without artifact quota
+        if: github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
