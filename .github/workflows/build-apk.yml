@@ -71,6 +71,8 @@ jobs:
           test -s gradle/wrapper/gradle-wrapper.jar || { echo "::error::Missing generated gradle-wrapper.jar"; exit 1; }
           chmod +x ./gradlew
           ./gradlew --version
+      - name: Validate Dari Pashto English catalog parity
+        run: python3 scripts/validate-locale-parity.py
       - name: Validate approved UI assets in both app shells
         run: python3 scripts/validate-approved-ui-assets.py
       - name: Stage Android WebView assets and resources
