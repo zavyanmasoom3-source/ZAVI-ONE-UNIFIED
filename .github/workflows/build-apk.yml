@@ -184,6 +184,12 @@ jobs:
             name="ZAVI-ONE-ADMIN.apk"
           fi
           cp "$apk" "final-apks/$name"
+          # Assert the published APK contains this exact build and its shared modules.
+          unzip -p "final-apks/$name" assets/zavi-build-info.json | grep -F "$GITHUB_SHA" >/dev/null || { echo "::error::Stale APK or missing build identity"; exit 1; }
+          unzip -p "final-apks/$name" assets/index.html | grep -F './packages/shared/database/supabase-config.js' >/dev/null || { echo "::error::Shared import path is invalid"; exit 1; }
+          for asset in assets/packages/shared/database/supabase-config.js assets/packages/shared/security/access-contract.js assets/packages/shared/i18n/language-core.js assets/zavi-unified-compact-v1.css; do
+            unzip -l "final-apks/$name" | grep -F "$asset" >/dev/null || { echo "::error::Missing embedded $asset"; exit 1; }
+          done
           APKSIGNER="$ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner"
           test -x "$APKSIGNER" || { echo "::error::Android SDK apksigner missing at $APKSIGNER"; exit 1; }
           "$APKSIGNER" verify --verbose --print-certs "final-apks/$name"
