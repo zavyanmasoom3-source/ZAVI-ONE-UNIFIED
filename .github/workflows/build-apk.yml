@@ -8,6 +8,8 @@ permissions:
 
 jobs:
   android:
+    # OWNER APPROVAL GATE: disabled until explicit permission to build APKs.
+    if: ${{ false }}
     name: Android ${{ matrix.app }}
     runs-on: ubuntu-latest
     strategy:
