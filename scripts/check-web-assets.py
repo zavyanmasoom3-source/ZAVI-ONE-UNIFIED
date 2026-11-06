@@ -13,7 +13,7 @@ for app in ("one","admin"):
         if code not in (root/"zavi-preferences-v2.js").read_text(encoding="utf-8"):failed.append(f"{app}: language missing {code}")
     # Every local script and stylesheet referenced by the entrypoint must exist.
     # External https/data URLs and dynamic runtime resources are intentionally excluded.
-    for raw in re.findall(r'''(?:src|href)\\s*=\\s*["']([^"']+)["']''', html, flags=re.I):
+    for raw in re.findall(r'''(?:src|href)\s*=\s*["']([^"']+)["']''', html, flags=re.I):
         path=raw.split("?",1)[0].split("#",1)[0]
         if not path or path.startswith(("http:","https:","data:","blob:","//","#","mailto:")):
             continue
