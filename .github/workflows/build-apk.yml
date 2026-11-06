@@ -80,6 +80,22 @@ jobs:
           cp -a "apps/${{ matrix.app }}/." android-build/app/src/main/assets/
           mkdir -p android-build/app/src/main/assets/packages/shared
           cp -a packages/shared/. android-build/app/src/main/assets/packages/shared/
+          # In the repository, ../../packages/shared is correct for web hosting,
+          # but APK WebView loads assets/index.html: remap to packaged assets.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-build/app/src/main/assets/index.html')
+          s=p.read_text(encoding='utf-8')
+          old='../../packages/shared/'
+          count=s.count(old)
+          if count < 3:
+              raise SystemExit(f'Expected at least 3 shared module links; got {count}')
+          p.write_text(s.replace(old,'./packages/shared/'),encoding='utf-8')
+          for path in ['database/supabase-config.js','security/access-contract.js','i18n/language-core.js']:
+              assert (Path('android-build/app/src/main/assets/packages/shared')/path).is_file(), path
+          PY
+          printf '{"commit":"%s","app":"%s","run":"%s"}\n' "$GITHUB_SHA" "${{ matrix.app }}" "$GITHUB_RUN_NUMBER" > android-build/app/src/main/assets/zavi-build-info.json
+          test -s android-build/app/src/main/assets/zavi-build-info.json
           mkdir -p android-build/app/src/main/res/drawable-nodpi android-build/app/src/main/res/values android-build/app/src/main/res/xml
           cp "apps/${{ matrix.app }}/icon-192.png" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.png
           printf '%s\n' '<resources><style name="ZaviTheme" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:windowLightStatusBar">false</item></style></resources>' > android-build/app/src/main/res/values/styles.xml
