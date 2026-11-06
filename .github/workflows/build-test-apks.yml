@@ -69,6 +69,19 @@ jobs:
             test -s android-build/app/src/main/assets/zavi-build-info.json
             mkdir -p android-build/app/src/main/assets/packages/shared
             cp -a packages/shared/. android-build/app/src/main/assets/packages/shared/
+            # Rewrite web-hosted relative paths to the packaged WebView asset root.
+            python3 - <<'PY'
+            from pathlib import Path
+            p=Path('android-build/app/src/main/assets/index.html')
+            s=p.read_text(encoding='utf-8')
+            count=s.count('../../packages/shared/')
+            if count < 3:
+                raise SystemExit(f'Expected shared imports missing: {count}')
+            s=s.replace('../../packages/shared/','./packages/shared/')
+            p.write_text(s,encoding='utf-8')
+            for name in ('database/supabase-config.js','security/access-contract.js','i18n/language-core.js'):
+                assert (Path('android-build/app/src/main/assets/packages/shared')/name).is_file(),name
+            PY
             mkdir -p android-build/app/src/main/res/drawable-nodpi android-build/app/src/main/res/values android-build/app/src/main/res/xml
             cp "apps/$app/icon-192.png" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.png
             printf '%s\n' '<resources><style name="ZaviTheme" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:windowLightStatusBar">false</item></style></resources>' > android-build/app/src/main/res/values/styles.xml
@@ -80,6 +93,7 @@ jobs:
             unzip -l "$apk" | grep -F "assets/index.html" >/dev/null || { echo "::error::Missing app HTML in APK"; exit 1; }
             unzip -p "$apk" assets/index.html | grep -F "zavi-unified-compact-v1.css" >/dev/null || { echo "::error::UI entrypoint not packaged"; exit 1; }
             unzip -l "$apk" | grep -F "assets/zavi-unified-compact-v1.css" >/dev/null || { echo "::error::UI stylesheet missing in APK"; exit 1; }
+            unzip -p "$apk" assets/index.html | grep -F "./packages/shared/database/supabase-config.js" >/dev/null || { echo "::error::Shared import still points outside APK"; exit 1; }
             cp "$apk" "final-test-apks/$name"
             "${ANDROID_SDK_ROOT}/build-tools/36.0.0/apksigner" verify --verbose "final-test-apks/$name"
           done
