@@ -1,0 +1,10 @@
+/* Owner-approved compact management baseline; presentation-only. */
+@media(max-width:640px){
+  :is(.admin-card,.card,.panel,.settings-card,.table-card,.report-card){max-width:100%;min-width:0;box-sizing:border-box}
+  :is(.admin-card,.card,.panel,.settings-card,.table-card,.report-card) :is(input,select,textarea){max-width:100%;min-width:0;box-sizing:border-box}
+  :is(.admin-card,.card,.panel,.settings-card,.table-card,.report-card) :is(h1,h2,h3,h4,p,label){overflow-wrap:anywhere}
+  :is(.table-wrap,.table-scroll){max-width:100%;overflow-x:auto}
+}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(.admin-card,.card,.panel,.settings-card,.table-card,.report-card) :is(input,select,textarea){background:#fff;color:#172b46;border-color:#91a7bf}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(.admin-card,.card,.panel,.settings-card,.table-card,.report-card) :is(label,.hint,.muted){color:#354a63;opacity:1}
+@media(prefers-reduced-motion:reduce){:is(.admin-card,.card,.panel,button){animation:none!important;transition:none!important}}

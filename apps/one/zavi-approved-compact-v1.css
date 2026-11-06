@@ -1,0 +1,22 @@
+/* Approved compact UI baseline — additive, preserving financial behavior. */
+@media (max-width: 600px) {
+  html[data-zavi-theme] #content :is(.card,.panel,.settings-card,.report-card,.form-card,.summary-card,.table-card) {
+    max-width:100%; min-width:0; box-sizing:border-box;
+  }
+  html[data-zavi-theme] #content :is(.card,.panel,.settings-card,.report-card,.form-card,.summary-card,.table-card) :is(input,select,textarea) {
+    max-width:100%; min-width:0; box-sizing:border-box;
+  }
+  html[data-zavi-theme] #content :is(.card,.panel,.settings-card,.report-card,.form-card,.summary-card,.table-card) :is(h1,h2,h3,h4,label,p) {
+    overflow-wrap:anywhere;
+  }
+  html[data-zavi-theme] #content :is(.table-wrap,.table-scroll) {max-width:100%;overflow-x:auto;}
+}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.card,.panel,.settings-card,.report-card,.form-card,.summary-card,.table-card) :is(input,select,textarea) {
+  color:#162b45; background:#fff; border-color:#91a7bf;
+}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.card,.panel,.settings-card,.report-card,.form-card,.summary-card,.table-card) :is(label,.hint,.muted) {
+  color:#354a63; opacity:1;
+}
+@media(prefers-reduced-motion:reduce){
+  html[data-zavi-theme] #content :is(.card,.panel,button) {animation:none!important;transition:none!important;}
+}
