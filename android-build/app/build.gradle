@@ -25,7 +25,7 @@ android {
         applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
         minSdk 26
         targetSdk 36
-        versionCode (admin ? 145600 : 660690) + ciBuildNumber
+        versionCode ((admin ? 145600 : 660690) + ciBuildNumber)
         versionName (admin ? '1.4.60' : '66.69') + '.' + ciBuildNumber
         resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
     }
