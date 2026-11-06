@@ -1,21 +1,6 @@
 name: Build ZAVI Android APKs
 # Release rebuild after successful signing initialization; preserve all application assets.
 on:
-  push:
-    branches: [main, dev]
-    paths:
-      - 'android-build/**'
-      - 'apps/**'
-      - 'packages/shared/**'
-      - 'gradle/**'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - 'settings.gradle'
-      - 'build.gradle'
-      - 'gradle.properties'
-      - 'scripts/**'
-      - 'supabase/migrations/**'
-      - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
 permissions:
