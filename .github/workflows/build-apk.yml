@@ -2,7 +2,7 @@ name: Build ZAVI Android APKs
 # Release rebuild after successful signing initialization; preserve all application assets.
 on:
   push:
-    branches: [main]
+    branches: [main, fix/approved-ui-release-qa-20261106]
     paths:
       - 'android-build/**'
       - 'apps/**'
@@ -173,7 +173,7 @@ jobs:
           test -x "$APKSIGNER" || { echo "::error::Android SDK apksigner missing at $APKSIGNER"; exit 1; }
           "$APKSIGNER" verify --verbose --print-certs "final-apks/$name"
       - name: Publish signed APK directly to GitHub Releases
-        if: steps.signing.outputs.available == 'true'
+        if: steps.signing.outputs.available == 'true' && github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
