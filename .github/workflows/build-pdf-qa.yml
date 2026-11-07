@@ -1,0 +1,109 @@
+name: Build Unified PDF QA APKs
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'android-build/**'
+      - 'scripts/**'
+      - '.github/workflows/build-pdf-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-qa:
+    name: QA Android ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [one, admin]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - uses: android-actions/setup-android@v3
+      - name: Configure Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          test -d "$SDK_ROOT"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$SDKMANAGER" ]]; then
+            SDKMANAGER=$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager -print -quit 2>/dev/null || true)
+          fi
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" "platforms;android-36" "build-tools;36.0.0"
+      - name: Bootstrap Gradle wrapper
+        run: |
+          gradle wrapper --gradle-version 8.13 --distribution-type bin --no-daemon
+          test -s gradle/wrapper/gradle-wrapper.jar
+          chmod +x ./gradlew
+      - name: Stage app and shared assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf android-build/app/src/main/assets
+          mkdir -p android-build/app/src/main/assets
+          cp -a "apps/${{ matrix.app }}/." android-build/app/src/main/assets/
+          mkdir -p android-build/app/src/main/assets/packages/shared
+          cp -a packages/shared/. android-build/app/src/main/assets/packages/shared/
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-build/app/src/main/assets/index.html')
+          s=p.read_text(encoding='utf-8')
+          if '../../packages/shared/' not in s:
+              raise SystemExit('Expected shared module links are missing')
+          p.write_text(s.replace('../../packages/shared/','./packages/shared/'),encoding='utf-8')
+          for path in ['database/supabase-config.js','security/access-contract.js','i18n/language-core.js']:
+              if not (Path('android-build/app/src/main/assets/packages/shared')/path).is_file():
+                  raise SystemExit('Missing '+path)
+          PY
+          printf '{"commit":"%s","app":"%s","run":"%s"}\n' "$GITHUB_SHA" "${{ matrix.app }}" "$GITHUB_RUN_NUMBER" > android-build/app/src/main/assets/zavi-build-info.json
+          test -s android-build/app/src/main/assets/zavi-build-info.json
+          mkdir -p android-build/app/src/main/res/drawable-nodpi android-build/app/src/main/res/values android-build/app/src/main/res/xml
+          cp "apps/${{ matrix.app }}/icon-192.png" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.png
+          printf '%s\n' '<resources><style name="ZaviTheme" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:windowLightStatusBar">false</item></style></resources>' > android-build/app/src/main/res/values/styles.xml
+          printf '%s\n' '<?xml version="1.0" encoding="utf-8"?><paths xmlns:android="http://schemas.android.com/apk/res/android"><cache-path name="camera" path="."/></paths>' > android-build/app/src/main/res/xml/zavi_camera_paths.xml
+      - name: Validate WebView source
+        run: |
+          python3 scripts/fix-webview-receipt.py
+          python3 scripts/validate-webview-html.py
+      - name: Assemble QA APK
+        run: ./gradlew :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --stacktrace
+      - name: Verify new identity and PDF assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=$(find android-build/app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)
+          test -n "$apk"
+          unzip -p "$apk" assets/zavi-build-info.json | grep -F "$GITHUB_SHA"
+          unzip -l "$apk" | grep -F 'assets/zavi-pdf-final-v6760.css'
+          unzip -l "$apk" | grep -F 'assets/zavi-admin-pdf-final-v1467.css' || true
+          AAPT="$ANDROID_SDK_ROOT/build-tools/36.0.0/aapt"
+          "$AAPT" dump badging "$apk" | grep "versionName='66.76-pdf.${GITHUB_RUN_NUMBER}'\|versionName='1.4.67-pdf.${GITHUB_RUN_NUMBER}'"
+          mkdir -p final-apks
+          if [[ "${{ matrix.app }}" == "one" ]]; then
+            cp "$apk" final-apks/ZAVI_ONE_66.76_pdf_QA.apk
+          else
+            cp "$apk" final-apks/ZAVI_ONE_ADMIN_1.4.67_pdf_QA.apk
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI-ONE-UNIFIED-PDF-QA-${{ matrix.app }}
+          path: final-apks/*.apk
+          if-no-files-found: error
+          retention-days: 14
