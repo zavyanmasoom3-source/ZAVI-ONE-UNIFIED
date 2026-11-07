@@ -95,8 +95,11 @@ jobs:
           apk=$(find android-build/app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)
           test -n "$apk"
           unzip -p "$apk" assets/zavi-build-info.json | grep -F "$GITHUB_SHA"
-          unzip -l "$apk" | grep -F 'assets/zavi-pdf-final-v6760.css'
-          unzip -l "$apk" | grep -F 'assets/zavi-admin-pdf-final-v1467.css' || true
+          if [[ "${{ matrix.app }}" == "one" ]]; then
+            unzip -l "$apk" | grep -F 'assets/zavi-pdf-final-v6760.css'
+          else
+            unzip -l "$apk" | grep -F 'assets/zavi-admin-pdf-final-v1467.css'
+          fi
           AAPT="$ANDROID_SDK_ROOT/build-tools/36.0.0/aapt"
           badging=$("$AAPT" dump badging "$apk")
           printf '%s\\n' "$badging"
