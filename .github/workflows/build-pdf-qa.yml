@@ -9,6 +9,8 @@ on:
       - 'android-build/**'
       - 'scripts/**'
       - '.github/workflows/build-pdf-qa.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
