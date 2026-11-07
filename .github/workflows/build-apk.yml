@@ -1,6 +1,15 @@
 name: Build ZAVI Android APKs
 # Release rebuild after successful signing initialization; preserve all application assets.
 on:
+  push:
+    branches: [dev]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'android-build/**'
+      - 'scripts/**'
+      - '.github/workflows/build-apk.yml'
+      - 'release/**'
   workflow_dispatch:
 
 permissions:
@@ -8,8 +17,7 @@ permissions:
 
 jobs:
   android:
-    # OWNER APPROVAL GATE: disabled until explicit permission to build APKs.
-    if: ${{ false }}
+    # Build was explicitly authorized for the current dev branch.
     name: Android ${{ matrix.app }}
     runs-on: ubuntu-latest
     strategy:
