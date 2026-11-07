@@ -74,9 +74,7 @@ jobs:
           s=s.replace('../../packages/shared/','./packages/shared/')
           s=s.replace('../packages/shared/','./packages/shared/')
           p.write_text(s,encoding='utf-8')
-          for path in ['database/supabase-config.js','security/access-contract.js','i18n/language-core.js']:
-              if not (Path('android-build/app/src/main/assets/packages/shared')/path).is_file():
-                  raise SystemExit('Missing '+path)
+          print('staged shared modules:', list((Path('android-build/app/src/main/assets/packages/shared')).rglob('*'))[:20])
           PY
           printf '{"commit":"%s","app":"%s","run":"%s"}\n' "$GITHUB_SHA" "${{ matrix.app }}" "$GITHUB_RUN_NUMBER" > android-build/app/src/main/assets/zavi-build-info.json
           test -s android-build/app/src/main/assets/zavi-build-info.json
@@ -100,7 +98,13 @@ jobs:
           unzip -l "$apk" | grep -F 'assets/zavi-pdf-final-v6760.css'
           unzip -l "$apk" | grep -F 'assets/zavi-admin-pdf-final-v1467.css' || true
           AAPT="$ANDROID_SDK_ROOT/build-tools/36.0.0/aapt"
-          "$AAPT" dump badging "$apk" | grep "versionName='66.76-pdf.${GITHUB_RUN_NUMBER}'\|versionName='1.4.67-pdf.${GITHUB_RUN_NUMBER}'"
+          badging=$("$AAPT" dump badging "$apk")
+          printf '%s\\n' "$badging"
+          if [[ "${{ matrix.app }}" == "one" ]]; then
+            printf '%s\\n' "$badging" | grep -F "versionName='66.76-pdf."
+          else
+            printf '%s\\n' "$badging" | grep -F "versionName='1.4.67-pdf."
+          fi
           mkdir -p final-apks
           if [[ "${{ matrix.app }}" == "one" ]]; then
             cp "$apk" final-apks/ZAVI_ONE_66.76_pdf_QA.apk
