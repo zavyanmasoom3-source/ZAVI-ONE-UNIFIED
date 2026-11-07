@@ -61,7 +61,11 @@ jobs:
           mkdir -p android-build/app/src/main/assets
           cp -a "apps/${{ matrix.app }}/." android-build/app/src/main/assets/
           mkdir -p android-build/app/src/main/assets/packages/shared
-          cp -a packages/shared/. android-build/app/src/main/assets/packages/shared/
+          cp -a packages/shared/. android-build/app/src/main/assets/packages/shared/ || true
+          for shared_file in database/supabase-config.js security/access-contract.js i18n/language-core.js; do
+            mkdir -p "android-build/app/src/main/assets/packages/shared/$(dirname "$shared_file")"
+            cp "packages/shared/$shared_file" "android-build/app/src/main/assets/packages/shared/$shared_file"
+          done
           python3 - <<'PY'
           from pathlib import Path
           p=Path('android-build/app/src/main/assets/index.html')
