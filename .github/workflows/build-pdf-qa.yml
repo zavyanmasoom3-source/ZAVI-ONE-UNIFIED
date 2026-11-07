@@ -66,9 +66,10 @@ jobs:
           from pathlib import Path
           p=Path('android-build/app/src/main/assets/index.html')
           s=p.read_text(encoding='utf-8')
-          if '../../packages/shared/' not in s:
-              raise SystemExit('Expected shared module links are missing')
-          p.write_text(s.replace('../../packages/shared/','./packages/shared/'),encoding='utf-8')
+          # The app source may already use the packaged path or the web-host path.
+          s=s.replace('../../packages/shared/','./packages/shared/')
+          s=s.replace('../packages/shared/','./packages/shared/')
+          p.write_text(s,encoding='utf-8')
           for path in ['database/supabase-config.js','security/access-contract.js','i18n/language-core.js']:
               if not (Path('android-build/app/src/main/assets/packages/shared')/path).is_file():
                   raise SystemExit('Missing '+path)
