@@ -104,9 +104,9 @@ jobs:
           badging=$("$AAPT" dump badging "$apk")
           printf '%s\\n' "$badging"
           if [[ "${{ matrix.app }}" == "one" ]]; then
-            printf '%s\\n' "$badging" | grep -F "versionName='66.76-pdf'"
+            printf '%s\\n' "$badging" | grep -F "versionName='66.76-pdf.${{ github.run_number }}'"
           else
-            printf '%s\\n' "$badging" | grep -F "versionName='1.4.67-pdf'"
+            printf '%s\\n' "$badging" | grep -F "versionName='1.4.67-pdf.${{ github.run_number }}'"
           fi
           mkdir -p final-apks
           if [[ "${{ matrix.app }}" == "one" ]]; then
