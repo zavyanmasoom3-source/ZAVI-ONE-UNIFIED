@@ -3109,7 +3109,21 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
   if(matches.length!==1){toast(matches.length?'یک بارکد به چند محصول تعلق دارد؛ گدام را بررسی کنید.':'بارکد در گدام ثبت نشده است؛ ابتدا محصول را ثبت کنید.');return;}
   const p=matches[0];
   let row=[...box.querySelectorAll('.order-line')].find(r=>r.dataset.scanProductId===p.id);
-  if(row){const qty=row.querySelector('[data-field="qty"]');qty.focus();qty.select();toast('محصول پیدا شد؛ تعداد را خودتان مشخص کنید.');}
+  if(row){
+   const qty=row.querySelector('[data-field="qty"]');
+   const increased=qtyRound(Math.max(0,num(qty.value))+1);
+   const elsewhere=[...box.querySelectorAll('.order-line')].filter(other=>other!==row&&other.dataset.scanProductId===p.id).reduce((sum,other)=>sum+num(other.querySelector('[data-field="qty"]')?.value),0);
+   if(isSale&&increased+elsewhere>stockOf(p.id)+0.00001){
+    const msg=`موجودی «${p.name}» کافی نیست؛ موجود: ${fmtQty(stockOf(p.id))}`;
+    row.querySelector('.line-status').textContent=msg;
+    toast(msg);
+    qty.focus();
+    return;
+   }
+   qty.value=String(increased);
+   qty.focus();
+   toast('اسکن دوباره: تعداد این محصول یک واحد افزایش یافت.');
+  }
   else{
    row=[...box.querySelectorAll('.order-line')].find(r=>!r.querySelector('[data-field="productName"]').value.trim());
    if(!row){addLine();row=box.querySelector('.order-line:last-child');}
