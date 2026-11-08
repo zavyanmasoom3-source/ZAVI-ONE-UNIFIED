@@ -1,0 +1,35 @@
+/* ZAVI ONE — quiet, readable workspace over the approved PDF visual layer. */
+html[data-zavi-theme] #content{max-width:1220px;margin-inline:auto!important}
+html[data-zavi-theme] #content :is(.card,.panel,.settings-card,.form-card,.form-section,.order-card,.record-card,.account-box,.zv-feature-card){border-radius:15px!important;box-shadow:none!important}
+html[data-zavi-theme] #content :is(.page-head h1,.page-head h2){font-size:clamp(18px,2.5vw,23px)!important;letter-spacing:0!important}
+html[data-zavi-theme] #content :is(.page-head p,.tiny-note,.field-hint){line-height:1.65!important}
+html[data-zavi-theme] #content .stat-grid{gap:10px!important}
+html[data-zavi-theme] #content .stat{padding:14px 15px!important;min-height:94px!important}
+html[data-zavi-theme] #content .stat-value{font-size:clamp(16px,3vw,22px)!important}
+html[data-zavi-theme] #content .welcome{min-height:108px!important;padding:17px 20px!important;border-radius:16px!important;margin-bottom:12px!important}
+html[data-zavi-theme] #content .welcome h2{font-size:clamp(18px,3.5vw,24px)!important;margin-bottom:5px!important}
+html[data-zavi-theme] #content .welcome :is(p,.eyebrow,.zv-today){line-height:1.5!important}
+html[data-zavi-theme] #content .panel-head{padding:13px 16px!important}
+html[data-zavi-theme] #content :is(.btn,button){box-shadow:none!important}
+html[data-zavi-theme] #content .z649-dashboard-extras{display:none!important}
+html[data-zavi-theme] #content.zpdf-dashboard .backup-reminder{padding:13px!important;border-radius:14px!important}
+html[data-zavi-theme] #content.zavi-simple-workspace .zavi-settings-6546-intro{display:none!important}
+html[data-zavi-theme] #content.zavi-simple-workspace .zavi-settings-6546-group{margin:0 0 9px!important}
+html[data-zavi-theme] #content.zavi-simple-workspace .zavi-settings-6546-group>h3{display:none!important}
+html[data-zavi-theme] #content .zavi-simple-settings-group{border:1px solid var(--zpdf-line)!important;border-radius:16px!important;background:var(--zpdf-paper)!important;min-width:0;overflow:clip}
+html[data-zavi-theme] #content .zavi-simple-settings-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:14px 17px;font-weight:800;font-size:14px;color:var(--zpdf-ink)!important}
+html[data-zavi-theme] #content .zavi-simple-settings-group>summary::-webkit-details-marker{display:none}
+html[data-zavi-theme] #content .zavi-simple-settings-group>summary::after{content:'+';font-size:23px;font-weight:400;line-height:1;color:var(--zpdf-muted)!important}
+html[data-zavi-theme] #content .zavi-simple-settings-group[open]>summary{border-bottom:1px solid var(--zpdf-line)!important}
+html[data-zavi-theme] #content .zavi-simple-settings-group[open]>summary::after{content:'−'}
+html[data-zavi-theme] #content .zavi-simple-settings-body{display:grid;gap:10px;padding:12px;min-width:0}
+html[data-zavi-theme] #content .zavi-simple-settings-body>*{margin:0!important;min-width:0;max-width:100%}
+html[data-zavi-theme] #content .zavi-simple-settings-body>.notice{padding:12px!important}
+@media(max-width:700px){
+ html[data-zavi-theme] #content{padding:13px 12px calc(98px + env(safe-area-inset-bottom))!important}
+ html[data-zavi-theme] #content .welcome{padding:14px!important;min-height:100px!important}
+ html[data-zavi-theme] #content .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ html[data-zavi-theme] #content .stat{padding:12px!important;min-height:87px!important}
+ html[data-zavi-theme] #content .zavi-simple-settings-body{padding:9px}
+ html[data-zavi-theme] #content .zavi-simple-settings-group>summary{min-height:52px;padding:12px 13px}
+}
