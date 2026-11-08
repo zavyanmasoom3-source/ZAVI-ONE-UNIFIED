@@ -102,6 +102,8 @@ jobs:
         run: python3 scripts/fix-webview-receipt.py
       - name: Validate embedded HTML is not exposing source code
         run: python3 scripts/validate-webview-html.py
+      - name: Clean Android outputs before compilation
+        run: ./gradlew :app:clean -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --no-build-cache
       - name: Assemble debug APK (compilation smoke test)
         run: ./gradlew :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --stacktrace
       - name: Verify debug APK locally without consuming artifact quota
@@ -195,10 +197,10 @@ jobs:
           badging=$("$AAPT" dump badging "final-apks/$name")
           if [[ "${{ matrix.app }}" == "one" ]]; then
             expected_id="com.zavione.one"
-            expected_version="66.76-pdf.${GITHUB_RUN_NUMBER}"
+            expected_version="66.77-rc.${GITHUB_RUN_NUMBER}"
           else
             expected_id="com.zavione.one.admin"
-            expected_version="1.4.67-pdf.${GITHUB_RUN_NUMBER}"
+            expected_version="1.4.68-rc.${GITHUB_RUN_NUMBER}"
           fi
           printf '%s\n' "$badging" | grep -F "name='${expected_id}'"
           printf '%s\n' "$badging" | grep -F "versionName='${expected_version}'" || { echo "::error::APK versionName is not the current run"; exit 1; }
@@ -222,8 +224,9 @@ jobs:
             sleep 5
           done
           gh release view "$tag" >/dev/null || { echo "::error::GitHub Release creation failed"; exit 1; }
+          sha256sum "$asset" > "$asset.sha256"
           for attempt in 1 2 3; do
-            if gh release upload "$tag" "$asset" --clobber; then
+            if gh release upload "$tag" "$asset" "$asset.sha256" --clobber; then
               echo "Published $asset to release $tag"
               exit 0
             fi
