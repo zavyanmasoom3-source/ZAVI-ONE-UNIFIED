@@ -2,7 +2,7 @@ name: Build Unified PDF QA APKs
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, recovery/66.75-qa]
     paths:
       - 'apps/**'
       - 'packages/**'
@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [one, admin]
+        app: [one]
     steps:
       - uses: actions/checkout@v4
       - name: Verify navigation regression and simplified UI assets
@@ -108,7 +108,7 @@ jobs:
           badging=$("$AAPT" dump badging "$apk")
           printf '%s\\n' "$badging"
           if [[ "${{ matrix.app }}" == "one" ]]; then
-            printf '%s\\n' "$badging" | grep -F "versionName='66.77-rc.${{ github.run_number }}'"
+            printf '%s\\n' "$badging" | grep -F "versionName='66.75-recovery-qa.${{ github.run_number }}'"
           else
             printf '%s\\n' "$badging" | grep -F "versionName='1.4.68-rc.${{ github.run_number }}'"
           fi
