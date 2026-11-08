@@ -71,6 +71,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf android-build/app/src/main/assets
           mkdir -p android-build/app/src/main/assets
           cp -a "apps/${{ matrix.app }}/." android-build/app/src/main/assets/
           mkdir -p android-build/app/src/main/assets/packages/shared
@@ -188,6 +189,17 @@ jobs:
           APKSIGNER="$ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner"
           test -x "$APKSIGNER" || { echo "::error::Android SDK apksigner missing at $APKSIGNER"; exit 1; }
           "$APKSIGNER" verify --verbose --print-certs "final-apks/$name"
+          AAPT="$ANDROID_SDK_ROOT/build-tools/36.0.0/aapt"
+          badging=$("$AAPT" dump badging "final-apks/$name")
+          if [[ "${{ matrix.app }}" == "one" ]]; then
+            expected_id="com.zavione.one"
+            expected_version="66.76-pdf.${GITHUB_RUN_NUMBER}"
+          else
+            expected_id="com.zavione.one.admin"
+            expected_version="1.4.67-pdf.${GITHUB_RUN_NUMBER}"
+          fi
+          printf '%s\n' "$badging" | grep -F "name='${expected_id}'"
+          printf '%s\n' "$badging" | grep -F "versionName='${expected_version}'" || { echo "::error::APK versionName is not the current run"; exit 1; }
       - name: Publish signed APK directly to GitHub Releases
         if: steps.signing.outputs.available == 'true'
         shell: bash
@@ -201,7 +213,7 @@ jobs:
           # Matrix jobs may reach this point simultaneously. Only one creates
           # the release; the other waits for it instead of failing on a race.
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --title "ZAVI ONE Android build ${GITHUB_RUN_NUMBER}" --notes "Signed Android builds from commit ${GITHUB_SHA}. Automated build only; device and functional QA are still required." --prerelease || true
+            gh release create "$tag" --target "$GITHUB_SHA" --title "ZAVI ONE Android build ${GITHUB_RUN_NUMBER}" --notes "Signed Android builds from commit ${GITHUB_SHA}. Automated build only; device and functional QA are still required." --prerelease || true
           fi
           for attempt in 1 2 3 4 5 6; do
             if gh release view "$tag" >/dev/null 2>&1; then break; fi
