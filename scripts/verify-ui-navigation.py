@@ -22,7 +22,7 @@ assert '<link rel="stylesheet" href="./zavi-simple-workspace-v1.css?v=1">' in he
 assert '<script defer src="./zavi-simple-workspace-v1.js?v=1"></script>' in head, "Simple settings code is not loaded"
 assert ui_js.is_file() and ui_css.is_file(), "Simple workspace assets missing"
 script = ui_js.read_text(encoding="utf-8")
-for needle in ("zavi-settings-6546-group", "zavi-simple-settings-group", "MutationObserver", "openState"):
+for needle in ("zavi-simple-group", "zavi-simple-settings-group", "MutationObserver", "openState", "settingsSection"):
     assert needle in script, f"Settings grouping contract missing: {needle}"
 if shutil.which("node"):
     subprocess.run(["node", "--check", str(ui_js)], check=True)
