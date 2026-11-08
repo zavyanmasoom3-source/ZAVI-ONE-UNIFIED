@@ -88,6 +88,8 @@ jobs:
         run: |
           python3 scripts/fix-webview-receipt.py
           python3 scripts/validate-webview-html.py
+      - name: Clean Android build outputs
+        run: ./gradlew :app:clean -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --no-build-cache
       - name: Assemble QA APK
         run: ./gradlew :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --stacktrace
       - name: Verify new identity and PDF assets
@@ -106,15 +108,15 @@ jobs:
           badging=$("$AAPT" dump badging "$apk")
           printf '%s\\n' "$badging"
           if [[ "${{ matrix.app }}" == "one" ]]; then
-            printf '%s\\n' "$badging" | grep -F "versionName='66.76-pdf.${{ github.run_number }}'"
+            printf '%s\\n' "$badging" | grep -F "versionName='66.77-rc.${{ github.run_number }}'"
           else
-            printf '%s\\n' "$badging" | grep -F "versionName='1.4.67-pdf.${{ github.run_number }}'"
+            printf '%s\\n' "$badging" | grep -F "versionName='1.4.68-rc.${{ github.run_number }}'"
           fi
           mkdir -p final-apks
           if [[ "${{ matrix.app }}" == "one" ]]; then
-            cp "$apk" final-apks/ZAVI_ONE_66.76_pdf_QA.apk
+            cp "$apk" final-apks/ZAVI_ONE_66.77_rc_QA.apk
           else
-            cp "$apk" final-apks/ZAVI_ONE_ADMIN_1.4.67_pdf_QA.apk
+            cp "$apk" final-apks/ZAVI_ONE_ADMIN_1.4.68_rc_QA.apk
           fi
       - uses: actions/upload-artifact@v4
         with:
