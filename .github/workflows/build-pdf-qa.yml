@@ -28,6 +28,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify navigation regression and simplified UI assets
         run: python3 scripts/verify-ui-navigation.py
+      - name: Verify web asset integrity
+        run: python3 scripts/verify-web-assets.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
