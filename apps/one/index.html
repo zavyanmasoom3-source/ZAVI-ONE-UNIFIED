@@ -3566,7 +3566,7 @@ function updateSearch(v){
  },135);
 }
 document.addEventListener('click',e=>{
- const pagingButton=e.target.closest('[data-zavi-page]');
+ const pagingButton=e.target.closest('button[data-zavi-page][data-direction]');
  if(pagingButton){const name=pagingButton.dataset.zaviPage,dir=pagingButton.dataset.direction;if(name!==page||!['prev','next'].includes(dir))return;z647Pages[name]=Math.max(0,(z647Pages[name]||0)+(dir==='next'?1:-1));render();document.querySelector('.z647-pages')?.scrollIntoView?.({block:'nearest',behavior:'instant'});return;}
  if(e.target.closest('#zaviIntegrityCheckV636')){
   const analyzer=window.ZaviIntegrityAudit;
