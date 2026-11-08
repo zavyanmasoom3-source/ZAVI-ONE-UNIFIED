@@ -15,11 +15,12 @@
     const key=String(node.id||'')+' '+String(node.className||'');
     const title=String(node.querySelector(':scope > h3, :scope > .panel-head h3, :scope > h2')?.textContent||node.textContent||'').slice(0,145);
     if(/z20CloudPanel|z652DevicePanel|device|cloud|sync|offline|zavi-staff/i.test(key)||/دستگاه|ابر و دستگاه|همکار|وسایل|کلاوډ|device|cloud|sync/i.test(title))return 'cloud';
-    if(/zavi-rename-card|profile|z644-suite/.test(key)&&!/thermal|invoice|csv/i.test(key))return 'store';
+    if(/profile|avatar/i.test(key)||/پروفایل|پېژندپاڼه|profile|avatar/i.test(title))return 'account';
+    if(/zavi-rename-card|z644-suite/.test(key)&&!/thermal|invoice|csv/i.test(key))return 'store';
     if(/font|theme|custom-card|customize|appearance|language|z6515/i.test(key)||/فونت|ظاهر|زبان|شیشه|روښانه|ژبه|font|theme|appearance|language/i.test(title))return 'appearance';
+    if(/subscription|license|support|billing/i.test(key)||/اشتراک|پشتیبانی|تمدید|ګډون|subscription|support/i.test(title))return 'subscription';
     if(/z6527-studio|invoice|receipt|thermal|csv/i.test(key)||/فاکتور|رسید|چاپ|Excel|CSV|صندوق|حساب‌های نقدی|بلونه|invoice|receipt|cash accounts/i.test(title))return 'invoices';
     if(/security|access|permission|staff|biometric|pin/i.test(key)||/امنیت|دسترسی|رمز|صلاحیت|security|permission|password/i.test(title))return 'security';
-    if(/subscription|license|support|billing/i.test(key)||/اشتراک|پشتیبانی|تمدید|ګډون|subscription|support/i.test(title))return 'subscription';
     if(/shop|store|business|z642-smart/i.test(key)||/فروشگاه|کسب‌وکار|تجارت|دوکان|دکان|business|store/i.test(title))return 'store';
     if(/حساب و پروفایل|profile|avatar/i.test(title))return 'account';
     return 'advanced';
