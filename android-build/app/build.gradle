@@ -25,8 +25,9 @@ android {
         applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
         minSdk 26
         targetSdk 36
-        versionCode ((admin ? 146700 : 667600) + ciBuildNumber)
-        versionName ((admin ? '1.4.67-pdf' : '66.76-pdf') + '.' + ciBuildNumber)
+        // Explicitly advance each product's base version by one. The CI run number makes every artifact unique.
+        versionCode ((admin ? 146701 : 667601) + ciBuildNumber)
+        versionName ((admin ? '1.4.68-rc' : '66.77-rc') + '.' + ciBuildNumber)
         resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
     }
     signingConfigs {
