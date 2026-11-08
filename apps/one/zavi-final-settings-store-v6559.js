@@ -13,10 +13,10 @@ function group(el){
  if(/profile|avatar|پروفایل|پېژندپاڼه/i.test(s+' '+key))return 'account';
  if(/z20CloudPanel|z652DevicePanel|device|sync/i.test(key)||/دستگاه|همگام|کلاوډ|cloud|device|offline/i.test(s))return 'cloud';
  if(/اشتراک|پشتیبانی|تمدید|trial|subscription|renew|support|ګډون/i.test(s+' '+key))return 'subscription';
- if(/فونت|ظاهر|زبان|شخصی|انیمیشن|theme|appearance|language|font|رنګ|ژبه|size|zui-preferences/i.test(s+' '+key))return 'look';
  if(/رمز|امنیت|قفل|دسترسی|همکار|اثر انگشت|security|pin|permission|staff|biometric/i.test(s+' '+key))return 'security';
+ if(/فونت|ظاهر|زبان|شخصی‌سازی|انیمیشن|theme|appearance|language|font|رنګ|ژبه|size|zui-preferences|تقویم/i.test(s+' '+key))return 'look';
  if(/فاکتور|چاپ|رسید|صندوق|قیمت|حساب‌های نقدی|invoice|print|receipt|accounting|thermal|barcode/i.test(s+' '+key))return 'invoice';
- if(/دکان|فروشگاه|نوع تجارت|کسب‌وکار|shop|business|store/i.test(s+' '+key))return 'store';
+ if(/دکان|فروشگاه|نوع تجارت|تجارت عمومی|کسب‌وکار|quick start|shop|business|store/i.test(s+' '+key))return 'store';
  return 'advanced';
 }
 const eligible='section.settings-card,section.z20-panel,#z652DevicePanel,.z70-store-card,.z72-trial-card,.z72-ai-entry,.zui-preferences,.zavi-date-settings,.z643-workflow,.z6524-launch';
@@ -65,7 +65,14 @@ function enhance(){
   const id=group(el);
   list.querySelector('[data-group="'+id+'"] .zavi-clean-settings-stack').append(el);
  }
- if(candidates.length){removeBulkActions(hub);counts(hub)}
+ // Reconcile widgets injected later by legacy enhancement scripts, without cloning handlers.
+ for(const el of [...hub.querySelectorAll('.zavi-clean-settings-stack > *')]){
+  const id=group(el);
+  const target=list.querySelector('[data-group="'+id+'"] .zavi-clean-settings-stack');
+  if(target&&el.parentElement!==target)target.append(el);
+ }
+ if(candidates.length)removeBulkActions(hub);
+ counts(hub);
 }
 function search(hub,query){
  const lang=D[locale()],q=query.trim().toLowerCase();let total=0;
