@@ -7,7 +7,7 @@ import subprocess
 root = Path(__file__).resolve().parents[1]
 html = (root / "apps/one/index.html").read_text(encoding="utf-8")
 route_map = (root / "apps/one/zavi-pdf-screen-map-v6740.js").read_text(encoding="utf-8")
-ui_js = root / "apps/one/zavi-simple-workspace-v1.js"
+ui_js = root / "apps/one/zavi-final-settings-store-v6559.js"
 ui_css = root / "apps/one/zavi-simple-workspace-v1.css"
 head = html.split("</head>", 1)[0]
 
@@ -19,10 +19,11 @@ for route in ("sales", "purchases", "products", "contacts", "debtors", "creditor
     assert f"['{route}'," in html, f"Navigation item missing: {route}"
 
 assert '<link rel="stylesheet" href="./zavi-simple-workspace-v1.css?v=1">' in head, "Simple CSS is not loaded"
-assert '<script defer src="./zavi-simple-workspace-v1.js?v=1"></script>' in head, "Simple settings code is not loaded"
+assert 'src="./zavi-final-settings-store-v6559.js?' in html, "Canonical settings hub is not loaded"
+assert 'src="./zavi-simple-workspace-v1.js' not in html, "Legacy nested settings groups must not run"
 assert ui_js.is_file() and ui_css.is_file(), "Simple workspace assets missing"
 script = ui_js.read_text(encoding="utf-8")
-for needle in ("zavi-simple-group", "zavi-simple-settings-group", "MutationObserver", "openState", "settingsSection"):
+for needle in ("zavi-clean-settings-hub", "zavi-clean-settings-group", "MutationObserver", "search(hub", "zavi-clean-settings-stack", "'account','store','look','security','cloud','invoice','subscription','advanced'"):
     assert needle in script, f"Settings grouping contract missing: {needle}"
 if shutil.which("node"):
     subprocess.run(["node", "--check", str(ui_js)], check=True)
