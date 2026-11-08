@@ -2,19 +2,14 @@ name: Build ZAVI Android APKs
 # Release rebuild after successful signing initialization; preserve all application assets.
 on:
   push:
-    branches: [main]
+    branches: [dev]
     paths:
-      - 'android-build/**'
       - 'apps/**'
-      - 'packages/shared/**'
-      - 'gradle/**'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - 'settings.gradle'
-      - 'build.gradle'
-      - 'gradle.properties'
+      - 'packages/**'
+      - 'android-build/**'
       - 'scripts/**'
       - '.github/workflows/build-apk.yml'
+      - 'release/**'
   workflow_dispatch:
 
 permissions:
@@ -22,6 +17,7 @@ permissions:
 
 jobs:
   android:
+    # Build was explicitly authorized for the current dev branch.
     name: Android ${{ matrix.app }}
     runs-on: ubuntu-latest
     strategy:
@@ -30,6 +26,8 @@ jobs:
         app: [one, admin]
     steps:
       - uses: actions/checkout@v4
+      - name: Verify navigation regression and simplified UI assets
+        run: python3 scripts/verify-ui-navigation.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -75,10 +73,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf android-build/app/src/main/assets
           mkdir -p android-build/app/src/main/assets
           cp -a "apps/${{ matrix.app }}/." android-build/app/src/main/assets/
           mkdir -p android-build/app/src/main/assets/packages/shared
           cp -a packages/shared/. android-build/app/src/main/assets/packages/shared/
+          # In the repository, ../../packages/shared is correct for web hosting,
+          # but APK WebView loads assets/index.html: remap to packaged assets.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-build/app/src/main/assets/index.html')
+          s=p.read_text(encoding='utf-8')
+          old='../../packages/shared/'
+          count=s.count(old)
+          if count < 3:
+              raise SystemExit(f'Expected at least 3 shared module links; got {count}')
+          p.write_text(s.replace(old,'./packages/shared/'),encoding='utf-8')
+          for path in ['database/supabase-config.js','security/access-contract.js','i18n/language-core.js']:
+              assert (Path('android-build/app/src/main/assets/packages/shared')/path).is_file(), path
+          PY
+          printf '{"commit":"%s","app":"%s","run":"%s"}\n' "$GITHUB_SHA" "${{ matrix.app }}" "$GITHUB_RUN_NUMBER" > android-build/app/src/main/assets/zavi-build-info.json
+          test -s android-build/app/src/main/assets/zavi-build-info.json
           mkdir -p android-build/app/src/main/res/drawable-nodpi android-build/app/src/main/res/values android-build/app/src/main/res/xml
           cp "apps/${{ matrix.app }}/icon-192.png" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.png
           printf '%s\n' '<resources><style name="ZaviTheme" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:windowLightStatusBar">false</item></style></resources>' > android-build/app/src/main/res/values/styles.xml
@@ -87,8 +102,10 @@ jobs:
         run: python3 scripts/fix-webview-receipt.py
       - name: Validate embedded HTML is not exposing source code
         run: python3 scripts/validate-webview-html.py
+      - name: Clean Android outputs before compilation
+        run: ./gradlew :app:clean -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --no-build-cache
       - name: Assemble debug APK (compilation smoke test)
-        run: ./gradlew :app:assembleDebug -PzaviApp=${{ matrix.app }} --stacktrace
+        run: ./gradlew :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --stacktrace
       - name: Verify debug APK locally without consuming artifact quota
         shell: bash
         run: |
@@ -100,7 +117,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviUnsignedReleaseQa=true --stacktrace
+          ./gradlew :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} -PzaviUnsignedReleaseQa=true --stacktrace
           apk=$(find android-build/app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)
           test -n "$apk" || { echo "::error::R8 release compilation produced no APK"; exit 1; }
           echo "R8/resource shrinking compilation succeeded. Unsigned QA output will not be published."
@@ -152,7 +169,7 @@ jobs:
           ZAVI_RELEASE_STORE_PASSWORD: ${{ secrets.ZAVI_RELEASE_STORE_PASSWORD }}
           ZAVI_RELEASE_KEY_ALIAS: ${{ secrets.ZAVI_RELEASE_KEY_ALIAS }}
           ZAVI_RELEASE_KEY_PASSWORD: ${{ secrets.ZAVI_RELEASE_KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease -PzaviApp=${{ matrix.app }} --stacktrace
+        run: ./gradlew :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviBuildNumber=${{ github.run_number }} --stacktrace
       - name: Verify and name signed release APK
         if: steps.signing.outputs.available == 'true'
         shell: bash
@@ -167,9 +184,26 @@ jobs:
             name="ZAVI-ONE-ADMIN.apk"
           fi
           cp "$apk" "final-apks/$name"
+          # Assert the published APK contains this exact build and its shared modules.
+          unzip -p "final-apks/$name" assets/zavi-build-info.json | grep -F "$GITHUB_SHA" >/dev/null || { echo "::error::Stale APK or missing build identity"; exit 1; }
+          unzip -p "final-apks/$name" assets/index.html | grep -F './packages/shared/database/supabase-config.js' >/dev/null || { echo "::error::Shared import path is invalid"; exit 1; }
+          for asset in assets/packages/shared/database/supabase-config.js assets/packages/shared/security/access-contract.js assets/packages/shared/i18n/language-core.js assets/zavi-unified-compact-v1.css; do
+            unzip -l "final-apks/$name" | grep -F "$asset" >/dev/null || { echo "::error::Missing embedded $asset"; exit 1; }
+          done
           APKSIGNER="$ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner"
           test -x "$APKSIGNER" || { echo "::error::Android SDK apksigner missing at $APKSIGNER"; exit 1; }
           "$APKSIGNER" verify --verbose --print-certs "final-apks/$name"
+          AAPT="$ANDROID_SDK_ROOT/build-tools/36.0.0/aapt"
+          badging=$("$AAPT" dump badging "final-apks/$name")
+          if [[ "${{ matrix.app }}" == "one" ]]; then
+            expected_id="com.zavione.one"
+            expected_version="66.77-rc.${GITHUB_RUN_NUMBER}"
+          else
+            expected_id="com.zavione.one.admin"
+            expected_version="1.4.68-rc.${GITHUB_RUN_NUMBER}"
+          fi
+          printf '%s\n' "$badging" | grep -F "name='${expected_id}'"
+          printf '%s\n' "$badging" | grep -F "versionName='${expected_version}'" || { echo "::error::APK versionName is not the current run"; exit 1; }
       - name: Publish signed APK directly to GitHub Releases
         if: steps.signing.outputs.available == 'true'
         shell: bash
@@ -183,15 +217,16 @@ jobs:
           # Matrix jobs may reach this point simultaneously. Only one creates
           # the release; the other waits for it instead of failing on a race.
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --title "ZAVI ONE Android build ${GITHUB_RUN_NUMBER}" --notes "Signed Android builds from commit ${GITHUB_SHA}. Automated build only; device and functional QA are still required." --prerelease || true
+            gh release create "$tag" --target "$GITHUB_SHA" --title "ZAVI ONE Android build ${GITHUB_RUN_NUMBER}" --notes "Signed Android builds from commit ${GITHUB_SHA}. Automated build only; device and functional QA are still required." --prerelease || true
           fi
           for attempt in 1 2 3 4 5 6; do
             if gh release view "$tag" >/dev/null 2>&1; then break; fi
             sleep 5
           done
           gh release view "$tag" >/dev/null || { echo "::error::GitHub Release creation failed"; exit 1; }
+          sha256sum "$asset" > "$asset.sha256"
           for attempt in 1 2 3; do
-            if gh release upload "$tag" "$asset" --clobber; then
+            if gh release upload "$tag" "$asset" "$asset.sha256" --clobber; then
               echo "Published $asset to release $tag"
               exit 0
             fi

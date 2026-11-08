@@ -120,6 +120,18 @@ public final class MainActivity extends FragmentActivity {
             );
         }
         initializeWebView();
+        // Clear only HTTP resource cache on APK version changes. Do not clear
+        // cookies, localStorage, IndexedDB, WebStorage, or accounting drafts.
+        SharedPreferences versionPrefs = getSharedPreferences("zavi_apk_shell_version", MODE_PRIVATE);
+        long installedVersion = -1;
+        try {
+            installedVersion = getPackageManager().getPackageInfo(getPackageName(), 0).getLongVersionCode();
+        } catch (Exception ignored) {}
+        if (installedVersion > 0 && versionPrefs.getLong("last_loaded_version", -1) != installedVersion) {
+            webView.clearCache(true);
+            versionPrefs.edit().putLong("last_loaded_version", installedVersion).apply();
+            android.util.Log.i("ZAVI_WEBVIEW", "Resource cache refreshed for APK version " + installedVersion);
+        }
         webView.loadUrl(BASE + "index.html");
     }
 

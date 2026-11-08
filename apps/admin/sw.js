@@ -4,7 +4,8 @@
  * Auth, and signed offline entitlements are untouched by this worker.
  */
 'use strict';
-const CACHE_NAME='zavi-admin-source-reliability-20261104-v4';
+const APK_ORIGIN='https://appassets.androidplatform.net';
+const CACHE_NAME='zavi-admin-shell-20261105-v5';
 const CORE=['zavi-admin-showcase-v1459.css','zavi-clean-professional-v1458.css','zavi-admin-renewal-v1439.js','zavi-admin-congratulations-v1440.js','zavi-admin-command-v1441.js','zavi-admin-theme-congrats-v1440.css','zavi-three-sizes-v6588.js','zavi-three-sizes-v6588.css','zavi-landscape-v6589.js','zavi-landscape-v6589.css','zavi-mobile-rescue-v6590.js','zavi-mobile-rescue-v6590.css','zavi-admin-ipad-v1438.js','zavi-admin-ipad-v1438.css','zavi-dual-command-v6605.js','zavi-dual-command-v6605.css','zavi-entry-appearance.css',"zavi-luxe-safe-v2.css","zavi-luxe-safe-v2.js","zavi-i18n-v6541-verified.js","zavi-i18n-v12-dictionary.js","zavi-v659-admin.css","zavi-admin-experience-v645.css", "zavi-display-digits-v645.js"].concat(["zavi-update-center-v643.js", "zavi-admin-comfort-v643.css", "zavi-admin-studio-v642.css", "zavi-admin-finish-v640.css", "zavi-admin-premium-v639.css", "zavi-admin-polish-v638.css", "zavi-studio-admin-v637.css", "zavi-admin-v41-readable.css", "zavi-admin-v41-mobile-tables.js", "zavi-layout-contrast-v40.css", "zavi-premium-v37.css", "zavi-signature-v35.css", "zavi-locale-signature-v35.js", "index.html", "zavi-legacy-locale-v19.js", "zavi-locales-v19.js", "zavi-dark-executive-v18.css", "zavi-auto-update-v18.js", "style.css", "graphic-v24-1.css", "zavi-graphic-refresh.css", "neon-admin-v47.css", "zavi-android-v5-fix.css", "zavi-android-v6-fix.css", "zavi-android-v7-fix.css", "zavi-android-v8-login-fix.css", "app.js", "admin-portal.js", "account-control.js", "device-admin.js", "receipt-ui.js", "icon.png", "manifest.webmanifest", "zavi-admin-services-v15.js", "zavi-i18n-v22.js", "zavi-theme-v29.css", "zavi-final-light-v30.css", "zavi-light-production-v31.css", "zavi-light-hotfix-v32.css", "zavi-light-finish-v33.css", "zavi-light-studio-v34.css", "zavi-localization-finish-v33.js", "zavi-residual-i18n-v32.js", "zavi-theme-v29.js", "zavi-i18n-v27.js", "en.json", "fa.json", "ps.json", "zavi-i18n-v22.css", "zavi-dark-executive-v23.css", "zavi-dual-calendar-v22.js",  "zavi-admin-services-v15.css", "offline-status.html",  "zavi-release-polish-v19.css"]);
 const EXTRA=['zavi-web-responsive-v1.css','zavi-web-responsive-v1.js','zavi-admin-recovery-v141.js','zavi-admin-v140-ui-fixes.js','zavi-admin-theme-v11.css','zavi-admin-theme-v11.js','zavi-admin-next-v1.css','zavi-admin-next-v1.js','z1-admin-official.jpg','icon-192.png'];
 const SCOPE=new URL(self.registration.scope);
@@ -85,7 +86,18 @@ async function route(request,event){
   const cache=await caches.open(CACHE_NAME);
   if(known){
     const hit=await cache.match(key);
-    if(valid(hit,key))return hit; // Fast, deterministic offline-first route.
+    // Installed APK assets must take precedence over old Service Worker copies.
+    // The current release cache remains a fallback when truly offline.
+    if(valid(hit,key) && !nav) {
+      try {
+        const fresh = await fetch(new Request(request,{cache:'no-store'}));
+        if(valid(fresh,key)) {
+          event.waitUntil(cache.put(key,fresh.clone()).catch(()=>{}));
+          return fresh;
+        }
+      } catch (_) { return hit; }
+      return hit;
+    }
   }
   // Network fallback only for missing/static files and unknown navigation.
   const controller=new AbortController();const abort=setTimeout(()=>controller.abort(),nav?7500:11500);
@@ -120,7 +132,9 @@ self.addEventListener('fetch',event=>{
   const req=event.request;
   if(req.method!=='GET')return;
   const u=new URL(req.url);
-  if(!within(u))return; // سرور مرکزی requests bypass the SW completely.
+  if(!within(u))return;
+  // Installed APK assets must bypass PWA caches; the Android asset loader owns them.
+  if(u.origin===APK_ORIGIN)return; // سرور مرکزی requests bypass the SW completely.
   const doc=req.mode==='navigate'||req.destination==='document';
   const key=canonical(req.url)===ROOT?INDEX:canonical(req.url);
   if(!doc&&!STATIC.has(key))return; // No caching arbitrary GET/API responses.
